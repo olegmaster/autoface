@@ -22,3 +22,9 @@ Route::get('/map', 'MapController@index')->name('map');
 Route::resource('/device', 'DeviceController');
 
 Route::get('/device-path/{id}','DeviceController@getPathOfDevice');
+
+Route::get('/profile', 'UserController@edit')->name('profile');
+
+Route::post('/user/update', 'UserController@update');
+
+Route::get('/image/get/{deviceId}/{cameraId}/{page}', 'ImageController@getImage');

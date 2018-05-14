@@ -110,12 +110,6 @@
                             @endforeach
                             </ul>
                         @endif
-                        <li >
-
-                            <a href="">
-                                <i class="fa fa-user fa-lg"></i> Устройство и управление
-                            </a>
-                        </li>
                         <li class="{{ Request::is('device') ? 'active' : '' }}">
                             <a href="/device">
                                 <i class="fa fa-user fa-lg"></i> Диспетчер устройств
@@ -133,7 +127,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#">
+                            <a href="<?php echo route('profile'); ?>">
                                 <i class="fa fa-user fa-lg"></i> Настроить профиль
                             </a>
                         </li>

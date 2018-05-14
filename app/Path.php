@@ -4,8 +4,12 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
+
 class Path extends Model
 {
+
+
+
     public function getAddressByCoordinates(){
         $url = 'https://maps.googleapis.com/maps/api/geocode/json?language=ru&latlng=';
         $url .= $this->latitude . ',' . $this->longitude;
@@ -22,4 +26,10 @@ class Path extends Model
             . $data->results[0]->address_components[6]->long_name . ','
             . $data->results[0]->address_components[7]->long_name;
     }
+
+    public function images(){
+        return $this->hasMany('App\Image');
+    }
+
+
 }

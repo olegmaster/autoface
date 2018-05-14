@@ -310,19 +310,100 @@
             <script async defer
                     src="https://maps.googleapis.com/maps/api/js?key={{config('app.google_geocoding_api_key')}}&callback=initMap&language=ru">
             </script>
+            <script>
+                let imageLoader = {
+                    device: undefined,
+                    camera: undefined,
+                    page: 1,
+                    init: function(){
+                        let self = this;
+                        $('.devices-list').click(function(){
+                            self.device = this.dataset.id;
+                            self.downloadImages();
+                            // console.log(self.device);
+                        });
+
+                        $('.camera').click(function(){
+                           self.camera = this.dataset.cam_id;
+                            self.downloadImages();
+                           // console.log(self.camera);
+                        });
+                    },
+                    downloadImages: function(){
+                        $.ajax({
+                            type:'GET',
+                            url:'/image/get/'+this.device + '/' +this.camera + '/' + this.page,
+                            data:'_token = <?php echo csrf_token() ?>',
+                            success:function(data){
+                                let images = data.images;
+                                let res = '';
+                                if(images.length > 0) {
+
+                                    images.forEach(function(element){
+                                        res += "<img src='";
+                                        res += element.path;
+                                        res += "' ></img>";
+                                    });
+                                    $("#images-container").html(res);
+                                } else {
+                                    $("#images-container").html('Нет Данных');
+                                }
+                                console.log(data.images);
+
+                            }
+                        });
+                    }
+
+                }
+
+                $(document).ready(function(){
+                    imageLoader.init();
+                });
+
+
+            </script>
 
     </div>
 </div>
 
 
 <div class="footer">
-    <div class="camera-select">
-        <h4>Камеры</h4>
-        <div id="camera-1"></div>
-        <div id="camera-2"></div>
-        <div id="camera-3"></div>
-        <div id="camera-4"></div>
+    <div class="row">
+        <div class="camera-select col-md-2">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4>Камеры</h4>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div id="camera-1" class="camera" data-cam_id="1"></div>
+                </div>
+                <div class="col-md-6">
+                    <div id="camera-2" class="camera" data-cam_id="2"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div id="camera-3" class="camera" data-cam_id="3"></div>
+                </div>
+                <div class="col-md-6">
+                    <div id="camera-4" class="camera" data-cam_id="4"></div>
+                </div>
+            </div>
+            <div>
+                <div class="class-col-md-6">
+
+                </div>
+            </div>
+
+
+
+
+        </div>
+        <div id="images-container" class="col-md-8"><span style="color:white"><h1></h1></span></div>
     </div>
+
     <p></p>
 </div>
 @endsection

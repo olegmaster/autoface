@@ -11,17 +11,12 @@
 }
 
 .camera-select {
-    height: 150px;
-    width: 220px;
-    margin-left:30px;
-    margin-top:10px;
-    padding-left: 20px;
 
 }
 
 .camera-select h4{
     text-transform: uppercase;
-    margin-left: -59px;
+
 }
 
 
@@ -32,11 +27,22 @@
 
 #camera-1, #camera-2, #camera-3, #camera-4{
     background: url("/img/icons.png") 0 -23px no-repeat;
-    float: left;
-    height: 26px;
-    width: 34px;
-    margin: 20px;
+    width: 35px;
+    height: 45px;
     cursor: pointer;
+    margin: 10px 15px;
+}
+
+#images-container {
+    text-align: left;
+    /*float: right;*/
+}
+
+#images-container img {
+    height: 125px;
+    padding: 10px;
+    cursor: pointer;
+
 }
 
 #clock{
