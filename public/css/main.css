@@ -1,0 +1,44 @@
+.footer {
+    heigth:150px;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #1c1f24;
+    color: white;
+    text-align: center;
+    z-index: 2;
+}
+
+.camera-select {
+    height: 150px;
+    width: 220px;
+    margin-left:30px;
+    margin-top:10px;
+    padding-left: 20px;
+
+}
+
+.camera-select h4{
+    text-transform: uppercase;
+    margin-left: -59px;
+}
+
+
+.devices-list .active{
+    background-color: white;
+    color: black;
+}
+
+#camera-1, #camera-2, #camera-3, #camera-4{
+    background: url("/img/icons.png") 0 -23px no-repeat;
+    float: left;
+    height: 26px;
+    width: 34px;
+    margin: 20px;
+    cursor: pointer;
+}
+
+#clock{
+    font-family: 'Arial Обычный', 'Arial';
+}

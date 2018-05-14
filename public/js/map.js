@@ -3,7 +3,7 @@ let devicesInMenu = {
     'curentDeviceId': undefined,
     'addCkickOnMenuEventListener' : function () {
 
-        let self = this; 
+        let self = this;
 
         let lists = document.getElementsByClassName('devices-list');
 
