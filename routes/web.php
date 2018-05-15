@@ -28,3 +28,5 @@ Route::get('/profile', 'UserController@edit')->name('profile');
 Route::post('/user/update', 'UserController@update');
 
 Route::get('/image/get/{deviceId}/{cameraId}/{page}', 'ImageController@getImage');
+
+Route::post('/api/image/save', 'ApiController@imageSave');
