@@ -341,7 +341,7 @@
 
                                     images.forEach(function(element){
                                         res += "<img src='";
-                                        res += element.path;
+                                        res += element.name;
                                         res += "' ></img>";
                                     });
                                     $("#images-container").html(res);

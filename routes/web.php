@@ -30,3 +30,7 @@ Route::post('/user/update', 'UserController@update');
 Route::get('/image/get/{deviceId}/{cameraId}/{page}', 'ImageController@getImage');
 
 Route::post('/api/image/save', 'ApiController@imageSave');
+
+Route::post('/api/video/save', 'ApiController@videoSave');
+
+Route::get('/api/video/list', 'ApiController@videoList');
