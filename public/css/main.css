@@ -48,3 +48,7 @@
 #clock{
     font-family: 'Arial Обычный', 'Arial';
 }
+
+#prev_go, #next_go {
+    opacity: 0;
+}

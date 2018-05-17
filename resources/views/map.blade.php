@@ -316,6 +316,10 @@
                     camera: undefined,
                     page: 1,
                     init: function(){
+
+                        $('#prev_go').css('opacity' , '0');
+                        $('#next_go').css('opacity' , '1');
+
                         let self = this;
                         $('.devices-list').click(function(){
                             self.device = this.dataset.id;
@@ -328,7 +332,87 @@
                             self.downloadImages();
                            // console.log(self.camera);
                         });
+
+                        $(document).on('click', '#images-container img', function(){
+                            let path = this.getAttribute('src');
+                            self.setVideoRequired(path);
+                            $('#video_up').css('opacity', 0);
+                            $('#loading').css('opacity',1);
+
+                            let myVar = setInterval(function(){
+                                let res = path.split('/');
+                                let res2 = res[res.length-1].split('.');
+                                let videoUrl = 'public/data/video/' + res2[0] + ".mp4";
+                                if(self.imageExists(videoUrl)){
+                                    $('#camera_video').attr('src', videoUrl);
+                                    var video = document.getElementById('video_up');
+                                    $('#video_up').css('opacity', 1);
+                                    $('#loading').css('opacity',0);
+                                    clearInterval(myVar);
+                                    video.load();
+                                    video.play();
+                                }
+                            }, 500);
+                            $('#myModal').modal('show');
+                        });
+
+                        $('#prev_go').click(function(){
+                            self.goPrev();
+                            if(self.page == 1){
+                                $('#prev_go').css('opacity' , '0');
+                            }
+                        });
+
+                        $('#next_go').click(function(){
+                            self.goNext();
+                            $('#prev_go').css('opacity' , '1');
+                        });
+
+                        this.updateImages();
                     },
+
+                    updateImages: function(){
+                        let self = this;
+                        let myVar2 = setInterval(function(){
+                            let modalShown = $('#myModal').hasClass('show');
+                            console.log(modalShown);
+                            if(self.page == 1 && modalShown == false){
+                                console.log(self.page);
+                                self.downloadImages();
+                            }
+                        }, 25000);
+
+
+                    },
+
+                    setVideoRequired: function(path){
+                        $.ajax({
+                            type:'POST',
+                            url:'/api/video/required',
+                            data:{
+                                '_token' : '<?php echo csrf_token() ?>',
+                                'path' : path
+                            },
+                            success:function(data){
+                                console.log(data);
+                            }
+                        });
+                    },
+                    goNext: function(){
+                        let cur_page = this.page;
+                        cur_page = cur_page + 1;
+                        this.page = cur_page;
+                        this.downloadImages();
+                    },
+                    goPrev: function(){
+                        let cur_page = this.page;
+                        if(cur_page > 1){
+                            cur_page = cur_page -1;
+                            this.page = cur_page;
+                            this.downloadImages();
+                        }
+                    },
+
                     downloadImages: function(){
                         $.ajax({
                             type:'GET',
@@ -352,6 +436,17 @@
 
                             }
                         });
+                    },
+
+                    imageExists: function (image_url){
+
+                        var http = new XMLHttpRequest();
+
+                        http.open('HEAD', image_url, false);
+                        http.send();
+
+                        return http.status != 404;
+
                     }
 
                 }
@@ -401,9 +496,39 @@
 
 
         </div>
-        <div id="images-container" class="col-md-8"><span style="color:white"><h1></h1></span></div>
+        <div class="col-md-1" id="prev_go"><button>Prev</button></div>
+        <div id="images-container" class="col-md-6"><span style="color:white"><h1></h1></span></div>
+        <div class="col-md-1" id="next_go"><button>Next</button></div>
     </div>
 
     <p></p>
 </div>
+
+
+<div id="myModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Play Video</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <span id="loading">Loading ...</span>
+                <video id="video_up" width="320" height="240" controls>
+                    <source id="camera_video" src="public/data/video/cam1_17_05_2018_11_54_33.mp4" type="video/mp4">
+
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @endsection

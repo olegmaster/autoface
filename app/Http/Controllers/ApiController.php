@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Device;
 use App\Image;
 use App\Video;
+use League\Flysystem\Config;
+use RobbieP\CloudConvertLaravel\CloudConvert;
+
 
 class ApiController extends Controller
 {
@@ -14,6 +17,12 @@ class ApiController extends Controller
         $cam1 = $request->file('image');
         $cam2 = $request->file('image2');
         $text = $request->file('text');
+
+//        echo "<pre>";
+//        print_r($cam1->getClientOriginalName());
+//        echo "</pre>";
+//
+//        die();
 
         $msg = [];
 
@@ -36,7 +45,7 @@ class ApiController extends Controller
 
 
         if(isset($cam1)){
-            $path = $request->file('image')->store('public/data/' . $device->id . '/camera1');
+            $path = $request->file('image')->storeAs('public/data/' . $device->id . '/camera1', $cam1->getClientOriginalName());
             $image = new Image;
             $image->name = $path;
             $image->device_id = $device->id;
@@ -45,7 +54,7 @@ class ApiController extends Controller
             $msg[] = "I have recived camera 1 screen";
         }
         if(isset($cam2)){
-            $path = $request->file('image2')->store('public/data/' . $device->id . '/camera2');
+            $path = $request->file('image2')->storeAs('public/data/' . $device->id . '/camera2',$cam2->getClientOriginalName());
             $image = new Image;
             $image->name = $path;
             $image->device_id = $device->id;
@@ -54,7 +63,7 @@ class ApiController extends Controller
             $msg[] = "I have recived camera 2 screen";
         }
         if(isset($text)){
-            $path = $request->file('text')->store('public/data/' . $device->id . '/text');
+            $path = $request->file('text')->storeAs('public/data/' . $device->id . '/text', $text->getClientOriginalName());
             $msg[] = "I have recived text";
         }
 
@@ -69,10 +78,17 @@ class ApiController extends Controller
 
     public function videoSave(Request $request){
 
+        //die();
+
         $video = $request->file('video');
 
         if(isset($video)){
-            $path = $request->file('video')->store('public/data/video');
+            $path = $request->file('video')->storeAs('public/data/video', $video->getClientOriginalName());
+
+            $convert = new CloudConvert();
+
+            $convert->setApiKey('AWQmdtFL909VRgdqJnvKAh7nXcQv7UfrgxsVc7H0XkfBQQ2SEma6uwALQcj28yR8');
+            $convert->file($path)->to('mp4');
             $msg[] = "I have recived video";
         }
 
@@ -84,10 +100,40 @@ class ApiController extends Controller
 
     }
 
+    public function setVideoRequired(Request $request){
+
+
+        $path = $request->path;
+        //echo $request->path;
+        $path_elem = explode('/', $path);
+        //print_r($path_elem);
+        $last = $path_elem[count($path_elem)-1];
+        //echo $last;
+        $second = explode('.', $last);
+        $file_name = $second[0];
+        //echo $file_name;
+        $video = new Video;
+        $video->name = $file_name;
+        $video->save();
+
+
+    }
+
     public function videoList(){
-        return response()->json([
-            'cam2_16.05.2018.12.59.52'
-        ]);
+
+        $videos = Video::where('downloaded', 0)->get();
+        Video::where('downloaded', 0)->update(['downloaded' => 1]);
+        $videosArr = $videos->toArray();
+
+        $result = [];
+
+
+        foreach ($videos as $video){
+            $result[] = $video->name;
+            //print_r($video);
+        }
+
+        return response()->json($result);
     }
 
 }

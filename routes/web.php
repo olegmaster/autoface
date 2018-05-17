@@ -34,3 +34,5 @@ Route::post('/api/image/save', 'ApiController@imageSave');
 Route::post('/api/video/save', 'ApiController@videoSave');
 
 Route::get('/api/video/list', 'ApiController@videoList');
+
+Route::post('/api/video/required', 'ApiController@setVideoRequired');
