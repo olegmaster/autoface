@@ -299,12 +299,12 @@
                         });
                     }
 
-                    let cityCircle;
+
 
                     let zones = [];
 
                     $('.add-zone').click(function(){
-                        cityCircle = new google.maps.Circle({
+                        var cityCircle = new google.maps.Circle({
                             strokeColor: '#5555',
                             strokeOpacity: 0.8,
                             strokeWeight: 2,
@@ -316,17 +316,28 @@
                             editable: true
                         });
 
-                        zones.push(cityCircle);
+                        var cityCircle2 = new google.maps.Circle({
+                            strokeColor: '#5555',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillColor: '#55555',
+                            fillOpacity: 0.35,
+                            map: map,
+                            center: {lat: 49.98631114, lng: 36.22058061},
+                            radius: 122,
+                            editable: true
+                        });
+                        cityCircle.id = 22;
 
-                        console.log(zones);
-
-                        cityCircle.id = Math.random();
-
-                        console.log(cityCircle);
 
                         google.maps.event.addListener(cityCircle, 'radius_changed', function(){
-                            console.log(cityCircle.id);
-                            console.log(cityCircle.getRadius());
+
+                            console.log(this);
+                            console.log(cityCircle2);
+                            //console.log(cityCircle.getRadius());
+                            //console.log(cityCircle2.getRadius());
+                            //console.log(cityCircle.radius_changed());
+                            //console.log(cityCircle.center_changed());
                         });
 
                     });
