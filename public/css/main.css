@@ -43,6 +43,7 @@
     padding: 10px;
     cursor: pointer;
 
+
 }
 
 #clock{
@@ -51,4 +52,9 @@
 
 #prev_go, #next_go {
     opacity: 0;
+
+}
+
+#prev_go button, #next_go button{
+    cursor: pointer;
 }

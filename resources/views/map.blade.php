@@ -299,9 +299,42 @@
                         });
                     }
 
+                    let cityCircle;
+
+                    let zones = [];
+
+                    $('.add-zone').click(function(){
+                        cityCircle = new google.maps.Circle({
+                            strokeColor: '#5555',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillColor: '#55555',
+                            fillOpacity: 0.35,
+                            map: map,
+                            center: {lat: 49.98631114, lng: 36.22058061},
+                            radius: 122,
+                            editable: true
+                        });
+
+                        zones.push(cityCircle);
+
+                        console.log(zones);
+
+                        cityCircle.id = Math.random();
+
+                        console.log(cityCircle);
+
+                        google.maps.event.addListener(cityCircle, 'radius_changed', function(){
+                            console.log(cityCircle.id);
+                            console.log(cityCircle.getRadius());
+                        });
+
+                    });
+
+
+
                     let devices = devicesInMenu;
                     devices.addCkickOnMenuEventListener();
-
 
                 }
 
@@ -311,81 +344,136 @@
                     src="https://maps.googleapis.com/maps/api/js?key={{config('app.google_geocoding_api_key')}}&callback=initMap&language=ru">
             </script>
             <script>
+
+                let helper = {
+                    showLoader: function(){
+                        $('#video_up').css('opacity', 0);
+                        $('#loading').css('opacity',1);
+                    },
+                    hideLoader: function(){
+                        $('#video_up').css('opacity', 1);
+                        $('#loading').css('opacity',0);
+                    }
+                };
+
                 let imageLoader = {
                     device: undefined,
                     camera: undefined,
+                    helper: helper,
                     page: 1,
                     init: function(){
 
-                        $('#prev_go').css('opacity' , '0');
-                        $('#next_go').css('opacity' , '1');
+                        this.clickOnDeviceHandle();
 
+                        this.clickOnCameraHandle();
+
+                        this.clickOnVideoImageHandle();
+
+                        this.clickOnNextButtonHandle();
+
+                        this.clickOnPrevButtonHandle();
+
+                        this.updateImages();
+                    },
+
+                    clickOnCameraHandle: function(){
+                        let self = this;
+                        $('.camera').click(function(){
+                            self.camera = this.dataset.cam_id;
+                            self.downloadImages();
+                        });
+                    },
+
+                    clickOnVideoImageHandle: function(){
+                        let self = this;
+                        $(document).on('click', '#images-container img', function(){
+                            let src = self.getCurrentImageSrcAttribute(this);
+                            self.informServerWeNeedThisVideo(src);
+                            self.helper.showLoader();
+                            self.tryLoadVideo(src);
+                            self.showModal();
+                        });
+                    },
+
+                    clickOnDeviceHandle: function(){
                         let self = this;
                         $('.devices-list').click(function(){
                             self.device = this.dataset.id;
                             self.downloadImages();
-                            // console.log(self.device);
                         });
+                    },
 
-                        $('.camera').click(function(){
-                           self.camera = this.dataset.cam_id;
-                            self.downloadImages();
-                           // console.log(self.camera);
-                        });
-
-                        $(document).on('click', '#images-container img', function(){
-                            let path = this.getAttribute('src');
-                            self.setVideoRequired(path);
-                            $('#video_up').css('opacity', 0);
-                            $('#loading').css('opacity',1);
-
-                            let myVar = setInterval(function(){
-                                let res = path.split('/');
-                                let res2 = res[res.length-1].split('.');
-                                let videoUrl = 'public/data/video/' + res2[0] + ".mp4";
-                                if(self.imageExists(videoUrl)){
-                                    $('#camera_video').attr('src', videoUrl);
-                                    var video = document.getElementById('video_up');
-                                    $('#video_up').css('opacity', 1);
-                                    $('#loading').css('opacity',0);
-                                    clearInterval(myVar);
-                                    video.load();
-                                    video.play();
-                                }
-                            }, 500);
-                            $('#myModal').modal('show');
-                        });
-
-                        $('#prev_go').click(function(){
-                            self.goPrev();
-                            if(self.page == 1){
-                                $('#prev_go').css('opacity' , '0');
-                            }
-                        });
-
+                    clickOnNextButtonHandle: function(){
+                        let self = this;
                         $('#next_go').click(function(){
                             self.goNext();
                             $('#prev_go').css('opacity' , '1');
                         });
+                    },
 
-                        this.updateImages();
+                    clickOnPrevButtonHandle: function(){
+                        let self = this;
+                        $('#prev_go').click(function(){
+                            self.goPrev();
+                            if(self.page == 1){
+                                self.hidePrevButton();
+                            }
+                        });
+                    },
+
+                    hidePrevButton: function(){
+                        $('#prev_go').css('opacity' , '0');
+                    },
+
+                    showNextButton: function(){
+                        if(this.page !== undefined && this.camera !== undefined){
+                            $('#next_go').css('opacity' , '1');
+                        }
+                    },
+
+                    hideButtons: function(){
+                        $('#prev_go').css('opacity' , '0');
+                        $('#next_go').css('opacity' , '0');
+                    },
+
+                    getCurrentImageSrcAttribute: function(obj){
+                        return obj.getAttribute('src');
+                    },
+
+                    showModal: function () {
+                        $('#myModal').modal('show');
+                    },
+
+                    tryLoadVideo: function(path){
+                        let self = this;
+                        let myVar = setInterval(function(){
+                            let res = path.split('/');
+                            let res2 = res[res.length-1].split('.');
+                            let videoUrl = 'public/data/video/' + res2[0] + ".mp4";
+                            if(self.imageExists(videoUrl)){
+                                $('#camera_video').attr('src', videoUrl);
+                                var video = document.getElementById('video_up');
+                                self.helper.hideLoader();
+                                clearInterval(myVar);
+                                video.load();
+                                video.play();
+                            }
+                        }, 500);
                     },
 
                     updateImages: function(){
                         let self = this;
                         let myVar2 = setInterval(function(){
                             let modalShown = $('#myModal').hasClass('show');
-                            console.log(modalShown);
                             if(self.page == 1 && modalShown == false){
-                                console.log(self.page);
                                 self.downloadImages();
                             }
-                        }, 25000);
+                        }, 4000);
 
 
                     },
 
-                    setVideoRequired: function(path){
+                    informServerWeNeedThisVideo: function(path){
                         $.ajax({
                             type:'POST',
                             url:'/api/video/required',
@@ -394,16 +482,18 @@
                                 'path' : path
                             },
                             success:function(data){
-                                console.log(data);
+
                             }
                         });
                     },
+
                     goNext: function(){
                         let cur_page = this.page;
                         cur_page = cur_page + 1;
                         this.page = cur_page;
                         this.downloadImages();
                     },
+
                     goPrev: function(){
                         let cur_page = this.page;
                         if(cur_page > 1){
@@ -414,6 +504,7 @@
                     },
 
                     downloadImages: function(){
+                        let self = this;
                         $.ajax({
                             type:'GET',
                             url:'/image/get/'+this.device + '/' +this.camera + '/' + this.page,
@@ -429,11 +520,11 @@
                                         res += "' ></img>";
                                     });
                                     $("#images-container").html(res);
+                                    self.showNextButton();
                                 } else {
                                     $("#images-container").html('Нет Данных');
+                                    self.hideButtons();
                                 }
-                                console.log(data.images);
-
                             }
                         });
                     },
@@ -462,6 +553,7 @@
 </div>
 
 
+
 <div class="footer">
     <div class="row">
         <div class="camera-select col-md-2">
@@ -488,7 +580,9 @@
             </div>
             <div>
                 <div class="class-col-md-6">
-
+                    <div class="add-zone">
+                        Add Zone+
+                    </div>
                 </div>
             </div>
 
@@ -523,7 +617,6 @@
                 </video>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary">Save changes</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>

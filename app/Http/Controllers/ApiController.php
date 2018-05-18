@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Path;
 use Illuminate\Http\Request;
 use App\Device;
 use App\Image;
@@ -41,9 +42,6 @@ class ApiController extends Controller
             ], 200);
         }
 
-
-
-
         if(isset($cam1)){
             $path = $request->file('image')->storeAs('public/data/' . $device->id . '/camera1', $cam1->getClientOriginalName());
             $image = new Image;
@@ -62,8 +60,17 @@ class ApiController extends Controller
             $image->save();
             $msg[] = "I have recived camera 2 screen";
         }
+
         if(isset($text)){
+
             $path = $request->file('text')->storeAs('public/data/' . $device->id . '/text', $text->getClientOriginalName());
+            $fileLines = $this->convertTextFileToArrayOfLines($path);
+
+            if($this->checkNavigatorIsWorking($fileLines)){
+                $coordinates = $this->getCoordinatesFromFileLines($fileLines);
+                $this->saveCoordinatesToDatabase($coordinates, $device->id);
+            }
+
             $msg[] = "I have recived text";
         }
 
@@ -85,10 +92,10 @@ class ApiController extends Controller
         if(isset($video)){
             $path = $request->file('video')->storeAs('public/data/video', $video->getClientOriginalName());
 
-            $convert = new CloudConvert();
+            //$convert = new CloudConvert();
 
-            $convert->setApiKey('AWQmdtFL909VRgdqJnvKAh7nXcQv7UfrgxsVc7H0XkfBQQ2SEma6uwALQcj28yR8');
-            $convert->file($path)->to('mp4');
+            //$convert->setApiKey('AWQmdtFL909VRgdqJnvKAh7nXcQv7UfrgxsVc7H0XkfBQQ2SEma6uwALQcj28yR8');
+            //$convert->file($path)->to('mp4');
             $msg[] = "I have recived video";
         }
 
@@ -121,19 +128,82 @@ class ApiController extends Controller
 
     public function videoList(){
 
-        $videos = Video::where('downloaded', 0)->get();
-        Video::where('downloaded', 0)->update(['downloaded' => 1]);
-        $videosArr = $videos->toArray();
-
         $result = [];
 
+        $videosOnEvents = Video::where('downloaded', 1)->orderBy('id', 'desc')->take(1)->get();
+
+        $videos = Video::where('downloaded', 0)->get();
+
+
+        Video::where('downloaded', 0)->update(['downloaded' => 1]);
+
+
+//        foreach ($videosOnEvents as $video){
+//            $elem = [];
+//            $elem['video_name'] = $video->name;
+//            $elem['state'] = 'undefined';
+//            $result[] = $elem;
+//        }
 
         foreach ($videos as $video){
             $result[] = $video->name;
-            //print_r($video);
         }
 
         return response()->json($result);
+    }
+
+    private function convertTextFileToArrayOfLines($path){
+        $result = [];
+        $handle = fopen($path, "r");
+        if($handle){
+            while(($line = fgets($handle)) !== false ){
+                $result[] = $line;
+            }
+            fclose($handle);
+        }
+        return $result;
+    }
+
+    private function getLatitudeLongitudeFromLine($line){
+        $lineExploded = explode(',', $line);
+        $latitude = isset($lineExploded[1]) ? $lineExploded[1] : '';
+        $longitude = isset($lineExploded[3]) ? $lineExploded[3] : '';
+        return [$latitude, $longitude];
+    }
+
+    private function saveCoordinatesToDatabase($coordinates, $deviceId){
+
+        $path = new Path;
+
+        foreach($coordinates as $coordinate){
+            $path->device_id = $deviceId;
+            $path->latitude = $coordinate[0];
+            $path->longitude = $coordinate[1];
+            $path->save();
+        }
+
+    }
+
+    private function getCoordinatesFromFileLines($fileLines){
+        $coordinates = [];
+        foreach($fileLines as $line){
+            if($line != ''){
+                $coordinate = $this->getLatitudeLongitudeFromLine($line);
+
+                if(!empty($coordinate[0]) && !empty($coordinate[1])){
+                    $coordinates[] = $coordinate;
+                }
+            }
+        }
+
+        return $coordinates;
+    }
+
+    private function checkNavigatorIsWorking($fileLines){
+        if($fileLines[0] == '-'){
+            return false;
+        }
+        return true;
     }
 
 }

@@ -19,12 +19,24 @@ class Path extends Model
         $data = json_decode($data_str);
         //print_r($data->results[0]->address_components[0]);
 
-        return $data->results[0]->address_components[1]->long_name . ', '
-            . $data->results[0]->address_components[0]->long_name . ','
-            . $data->results[0]->address_components[3]->long_name . ','
-            . $data->results[0]->address_components[5]->long_name . ','
-            . $data->results[0]->address_components[6]->long_name . ','
-            . $data->results[0]->address_components[7]->long_name;
+        if(!isset($data->results[0]->address_components[3])){
+            return '';
+        }
+
+        $ad1 = isset($data->results[0]->address_components[1]) ? $data->results[0]->address_components[1] : '';
+        $ad2 = isset($data->results[0]->address_components[0]) ? $data->results[0]->address_components[0] : '';
+        $ad3 = isset($data->results[0]->address_components[3]) ? $data->results[0]->address_components[3] : '';
+        $ad4 = isset($data->results[0]->address_components[5]) ? $data->results[0]->address_components[5] : '';
+        $ad5 = isset($data->results[0]->address_components[6]) ? $data->results[0]->address_components[6] : '';
+        $ad6 = isset($data->results[0]->address_components[7]) ? $data->results[0]->address_components[7] : '';
+
+
+        return $ad1 . ', '
+            . $ad2->long_name . ','
+            . $ad3->long_name . ','
+            . $ad4->long_name . ','
+            . $ad5->long_name . ','
+            . $ad6->long_name;
     }
 
     public function images(){
