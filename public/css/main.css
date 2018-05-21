@@ -58,3 +58,8 @@
 #prev_go button, #next_go button{
     cursor: pointer;
 }
+
+
+.active-camera {
+    background: yellow !important;
+}

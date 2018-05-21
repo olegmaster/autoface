@@ -303,7 +303,34 @@
 
                     let zones = [];
 
-                    $('.add-zone').click(function(){
+
+                    addZoneClick();
+
+                    function addZoneClick(){
+                        $('.add-zone').click(function(){
+                            if(!deviceIsSelected()){
+                                return;
+                            }
+                            addZone();
+                        });
+                    }
+
+
+
+
+                    function addZone(){
+
+                        var cityCircle = createZoneCircle();
+                        var zoneData = getZoneData(cityCircle);
+                        var zone_id = addNewZoneOnServer(zoneData);
+                        cityCircle.zone_id = zone_id;
+
+                        addRadiusChangeListenerToCircle(cityCircle);
+                        addCenterChangeListenerToCircle(cityCircle);
+                    }
+
+
+                    function createZoneCircle(){
                         var cityCircle = new google.maps.Circle({
                             strokeColor: '#5555',
                             strokeOpacity: 0.8,
@@ -315,32 +342,78 @@
                             radius: 122,
                             editable: true
                         });
-
-                        var cityCircle2 = new google.maps.Circle({
-                            strokeColor: '#5555',
-                            strokeOpacity: 0.8,
-                            strokeWeight: 2,
-                            fillColor: '#55555',
-                            fillOpacity: 0.35,
-                            map: map,
-                            center: {lat: 49.98631114, lng: 36.22058061},
-                            radius: 122,
-                            editable: true
-                        });
                         cityCircle.id = 22;
+                        return cityCircle;
+                    }
 
+                    function getZoneData(circle){
+                        var zoneData = {
+                            id: circle.id,
+                            device_id : imageLoader.device,
+                            longitude: circle.getCenter().lng(),
+                            latitude: circle.getCenter().lat(),
+                            radius: circle.getRadius()
+                        }
+                        return zoneData;
+                    }
 
-                        google.maps.event.addListener(cityCircle, 'radius_changed', function(){
-
-                            console.log(this);
-                            console.log(cityCircle2);
-                            //console.log(cityCircle.getRadius());
-                            //console.log(cityCircle2.getRadius());
-                            //console.log(cityCircle.radius_changed());
-                            //console.log(cityCircle.center_changed());
+                    function addRadiusChangeListenerToCircle(circle){
+                        google.maps.event.addListener(circle, 'radius_changed', function(){
+                            updateOnServer(circle);
                         });
+                    }
 
-                    });
+                    function updateOnServer(circle){
+                        var zoneData = getZoneData(circle);
+                        updateZone(zoneData);
+                    }
+
+                    function updateZone(zoneData){
+                        $.ajax({
+                            type:'POST',
+                            url:'/zone/change',
+                            data: zoneData,
+                            success:function(data){
+                                id = data.id;
+                            }
+                        });
+                    }
+
+                    function addCenterChangeListenerToCircle(circle){
+                        google.maps.event.addListener(circle, 'center_changed', function(){
+                            console.log(circle.getRadius());
+                            var center = circle.getCenter();
+                            console.log(center.lat());
+                            console.log(imageLoader);
+                        });
+                    }
+
+                    function deviceIsSelected(){
+                        if(imageLoader.device !== undefined){
+                            return true;
+                        } else{
+                            return false;
+                        }
+                    }
+
+                    function addNewZoneOnServer(zoneData){
+                        var id = undefined;
+                        var dataAboutZone = {
+                            device_id : zoneData.device_id,
+                            longitude : zoneData.longitude,
+                            latitude : zoneData.latitude,
+                            radius: zoneData.radius
+                        };
+                        $.ajax({
+                            type:'POST',
+                            url:'/zone/add',
+                            data: dataAboutZone,
+                            success:function(data){
+                                id = data.id;
+                            }
+                        });
+                        return id;
+                    }
 
 
 
@@ -390,9 +463,17 @@
                     clickOnCameraHandle: function(){
                         let self = this;
                         $('.camera').click(function(){
+                            self.higlightCameraIcon(this);
                             self.camera = this.dataset.cam_id;
                             self.downloadImages();
                         });
+                    },
+
+                    higlightCameraIcon: function(hh){
+                        console.log($(hh));
+                        $('.camera').removeClass('active-camera');
+                        $(hh).addClass('active-camera');
+
                     },
 
                     clickOnVideoImageHandle: function(){
@@ -622,7 +703,7 @@
             <div class="modal-body">
                 <span id="loading">Loading ...</span>
                 <video id="video_up" width="320" height="240" controls>
-                    <source id="camera_video" src="public/data/video/cam1_17_05_2018_11_54_33.mp4" type="video/ogg">
+                    <source id="camera_video" src="" type="video/ogg">
 
                     Your browser does not support the video tag.
                 </video>

@@ -97,6 +97,7 @@ class ApiController extends Controller
             //$convert->setApiKey('AWQmdtFL909VRgdqJnvKAh7nXcQv7UfrgxsVc7H0XkfBQQ2SEma6uwALQcj28yR8');
             //$convert->file($path)->to('mp4');
             $msg[] = "I have recived video";
+            shell_exec("sh /home/pz257197/auto-face.meral.com.ua/www/c.sh");
         }
 
         return response()->json([
@@ -127,6 +128,9 @@ class ApiController extends Controller
     }
 
     public function videoList(){
+
+
+
 
         $result = [];
 
