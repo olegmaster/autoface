@@ -460,7 +460,7 @@
                         let myVar = setInterval(function(){
                             let res = path.split('/');
                             let res2 = res[res.length-1].split('.');
-                            let videoUrl = 'public/data/video/' + res2[0] + ".mp4";
+                            let videoUrl = 'public/data/video/' + res2[0] + ".ogg";
                             if(self.imageExists(videoUrl)){
                                 $('#camera_video').attr('src', videoUrl);
                                 var video = document.getElementById('video_up');
@@ -622,7 +622,7 @@
             <div class="modal-body">
                 <span id="loading">Loading ...</span>
                 <video id="video_up" width="320" height="240" controls>
-                    <source id="camera_video" src="public/data/video/cam1_17_05_2018_11_54_33.mp4" type="video/mp4">
+                    <source id="camera_video" src="public/data/video/cam1_17_05_2018_11_54_33.mp4" type="video/ogg">
 
                     Your browser does not support the video tag.
                 </video>
