@@ -63,3 +63,7 @@
 .active-camera {
     background: yellow !important;
 }
+
+.add-zone {
+    cursor: pointer;
+}

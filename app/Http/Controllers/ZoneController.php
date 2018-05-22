@@ -7,6 +7,12 @@ use App\Zone;
 
 class ZoneController extends Controller
 {
+
+    public function getAll($deviceId){
+        $zones = Zone::where('device_id', $deviceId)->get();
+        return $zones;
+    }
+
     public function add(Request $request){
         $zone = new Zone;
         $zone->device_id = $request->device_id;
@@ -24,7 +30,10 @@ class ZoneController extends Controller
         $zone = Zone::find($request->id);
         $zone->device_id = $request->device_id;
         $zone->longitude = $request->longitude;
-        
-
+        $zone->latitude = $request->latitude;
+        $zone->radius = $request->radius;
+        $zone->save();
     }
+
+
 }

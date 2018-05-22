@@ -129,12 +129,9 @@ class ApiController extends Controller
 
     public function videoList(){
 
-
-
-
         $result = [];
 
-        $videosOnEvents = Video::where('downloaded', 1)->orderBy('id', 'desc')->take(1)->get();
+        $videosOnEvents = Video::where('downloaded', 0)->orderBy('id', 'desc')->take(1)->get();
 
         $videos = Video::where('downloaded', 0)->get();
 
@@ -145,7 +142,7 @@ class ApiController extends Controller
 //        foreach ($videosOnEvents as $video){
 //            $elem = [];
 //            $elem['video_name'] = $video->name;
-//            $elem['state'] = 'undefined';
+//            $elem['state'] = 'signaling';
 //            $result[] = $elem;
 //        }
 

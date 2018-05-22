@@ -37,4 +37,9 @@ Route::get('/api/video/list', 'ApiController@videoList');
 
 Route::post('/api/video/required', 'ApiController@setVideoRequired');
 
+Route::get('/zone/get-all/{deviceId}', 'ZoneController@getAll');
+
 Route::post('/zone/add', 'ZoneController@add');
+
+Route::post('/zone/change', 'ZoneController@change');
+
