@@ -67,3 +67,28 @@
 .add-zone {
     cursor: pointer;
 }
+
+.enlarge-image {
+    position: absolute;
+    margin-left: -80px;
+    margin-top: 6px;
+    cursor: pointer;
+}
+
+#large-image-window {
+    padding:2%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+     position: absolute;
+    top: 20px;
+    margin: 0 auto;
+    z-index: 0;
+    background: white;
+    opacity: 0;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+
+}
+

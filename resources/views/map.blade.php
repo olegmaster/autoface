@@ -2,7 +2,16 @@
 
 @section('content')
 <div class="container">
+
+
+
         <div class="col-md-12">
+            <div id="large-image-window">
+                <button type="button" class="close" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <img src="" id="large-image" >
+            </div>
             <div id="map" style="height:700px;width:130%;"></div>
 
             <script>
@@ -312,6 +321,8 @@
                     @endforeach
                     ];
 
+                    console.log(locations);
+
                     var uluru = {lat: 49.98884148, lng: 36.22041411};
                     var map = new google.maps.Map(document.getElementById('map'), {
                         zoom: 14,
@@ -336,7 +347,6 @@
 
                     }
 
-
                     function addZoneClick(){
                         $('.add-zone').click(function(){
                             if(!deviceIsSelected()){
@@ -349,11 +359,16 @@
 
                     function addDevicesOnMap(){
                         for (i = 0; i < locations.length; i++) {
-                            marker = new google.maps.Marker({
-                                position: new google.maps.LatLng(locations[i][1], locations[i][2]),
-                                map: map
-                            });
+                            console.log(locations[i][1] + " " + locations[i][2]);
+                            addDevice(locations[i][1], locations[i][2]);
                         }
+                    }
+
+                    function addDevice(latitude, longitude){
+                        new google.maps.Marker({
+                            position: new google.maps.LatLng(latitude, longitude),
+                            map: map
+                        });
                     }
 
                     function loadZones(device_id){
@@ -370,7 +385,6 @@
                             }
                         });
                     }
-
 
                     function addZone(zoneData){
                         var cityCircle = createZoneCircle(zoneData);
@@ -525,11 +539,58 @@
                     }
                 };
 
+                class Imager{
+
+                    constructor(){
+                        this.isOpen = false;
+                    }
+
+                    handle(){
+                        this.enlargeImageClick();
+                    }
+
+                    enlargeImageClick(){
+                        let self = this;
+                        $(document).on('click', '.enlarge-image', function(){
+                            self.showWindow();
+                            self.catchCloseWindow();
+                            let new_src = $(this).prev().attr('src');
+                            self.updateImageSrc(new_src);
+                        });
+                    }
+
+                    showWindow(){
+                        this.isOpen = true;
+                        $('#large-image-window').css('opacity', '1');
+                        $('#large-image-window').css('z-index', '1');
+                    }
+
+                    catchCloseWindow(){
+                        let self = this;
+                        $('#large-image-window .close').click(function(){
+                            self.isOpen = false;
+                            $('#large-image-window').css('opacity', '0');
+                            $('#large-image-window').css('z-index', '0');
+                        });
+                    }
+
+                    updateImageSrc(new_src){
+                        $('#large-image').attr('src', new_src);
+                    }
+                }
+
+                var imager = new Imager();
+
+                imager.handle();
+
+
                 let imageLoader = {
                     device: undefined,
                     camera: undefined,
                     helper: helper,
                     page: 1,
+                    imgHovered: false,
+
                     init: function(){
 
                         this.clickOnDeviceHandle();
@@ -541,6 +602,8 @@
                         this.clickOnNextButtonHandle();
 
                         this.clickOnPrevButtonHandle();
+
+                        this.catchImageHover();
 
                         this.updateImages();
                     },
@@ -598,6 +661,18 @@
                         });
                     },
 
+                    catchImageHover: function(){
+                        var self = this;
+                        $(document).on('mouseenter', '#images-container img', function(){
+                            self.imgHovered = true;
+                        });
+
+                        $(document).on('mouseleave', '#images-container img', function(){
+                            self.imgHovered = false;
+                        });
+
+                    },
+
                     hidePrevButton: function(){
                         $('#prev_go').css('opacity' , '0');
                     },
@@ -642,7 +717,7 @@
                         let self = this;
                         let myVar2 = setInterval(function(){
                             let modalShown = $('#myModal').hasClass('show');
-                            if(self.page == 1 && modalShown == false){
+                            if(self.page == 1 && modalShown == false && !self.imgHovered && !imager.isOpen){
                                 self.downloadImages();
                             }
                         }, 4000);
@@ -695,6 +770,7 @@
                                         res += "<img src='";
                                         res += element.name;
                                         res += "' ></img>";
+                                        res += '<span class="enlarge-image">Увеличить</span>';
                                     });
                                     $("#images-container").html(res);
                                     self.showNextButton();
@@ -802,6 +878,8 @@
         </div>
     </div>
 </div>
+
+
 
 
 @endsection
