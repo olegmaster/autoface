@@ -16,29 +16,7 @@
 
             <script>
 
-                let devicesInMenu = {
-                    'curentDeviceId': undefined,
-                    'addCkickOnMenuEventListener' : function () {
 
-                        let self = this;
-
-                        let lists = document.getElementsByClassName('devices-list');
-
-                        let count_el = lists.length;
-
-                        if (count_el > 0){
-                            for(let i = 0; i < count_el; i ++){
-                                lists[i].addEventListener('click',function(){
-                                    for(let j = 0; j < count_el; j ++){
-                                        lists[j].classList.remove('active');
-                                    }
-                                    this.classList.add('active');
-                                    self.curentDeviceId = this.dataset.id;
-                                });
-                            }
-                        }
-                    }
-                };
 
                 var arrOfStyles = [{
                     "featureType": "all",
@@ -315,13 +293,6 @@
 
                 function initMap() {
 
-                    var locations = [
-                    @foreach ($locations as $location)
-                            ["{{$location['name']}}",{{$location['latitude']}} , {{$location['longitude']}}],
-                    @endforeach
-                    ];
-
-                    console.log(locations);
 
                     var uluru = {lat: 49.98884148, lng: 36.22041411};
                     var map = new google.maps.Map(document.getElementById('map'), {
@@ -332,10 +303,13 @@
 
 
                     var allZones = [];
+                    var allMarkers = [];
 
-                    addDevicesOnMap();
+                    loadAllDevices();
 
                     loadZonesOnClickDevice();
+
+                    loadDeviceOnCLickDevice();
 
                     addZoneClick();
 
@@ -347,6 +321,62 @@
 
                     }
 
+                    function loadAllDevices(){
+                        // /device/get-all-for-map/
+                        askServerForDevices();
+                    }
+
+                    function askServerForDevices(){
+                        $.ajax({
+                            type: 'GET',
+                            url: '/get-all-device-for-map',
+                            success: function(data){
+                                console.log(data);
+                                data.forEach(function(elem){
+                                    mapAddMarker(elem.latitude, elem.longitude);
+                                });
+                            }
+                        });
+                    }
+
+                    function loadDeviceOnCLickDevice(){
+                        $('.devices-list').click(function(){
+                            cleanMarkers();
+                            var device_id = this.dataset.id;
+                            loadDeviceMarker(device_id);
+                        });
+                    }
+
+                    function loadDeviceMarker(device_id){
+                        $.ajax({
+                            type: 'GET',
+                            url: '/device/get-for-map/' + device_id,
+                            success: function(data){
+                                console.log(data);
+                                mapAddMarker(data.latitude, data.longitude);
+                            }
+                        });
+                    }
+
+
+
+                    function mapAddMarker(lat, lng){
+
+                        var marker = new google.maps.Marker({
+                            position: {lat: lat, lng: lng},
+                            map: map
+                        });
+                        allMarkers.push(marker);
+                    }
+
+                    function cleanMarkers(){
+                        for (var i = 0; i < allMarkers.length; i++) {
+                            allMarkers[i].setMap(null);
+                        }
+                    }
+
+
+
                     function addZoneClick(){
                         $('.add-zone').click(function(){
                             if(!deviceIsSelected()){
@@ -357,19 +387,13 @@
                         });
                     }
 
-                    function addDevicesOnMap(){
-                        for (i = 0; i < locations.length; i++) {
-                            console.log(locations[i][1] + " " + locations[i][2]);
-                            addDevice(locations[i][1], locations[i][2]);
-                        }
-                    }
 
-                    function addDevice(latitude, longitude){
-                        new google.maps.Marker({
-                            position: new google.maps.LatLng(latitude, longitude),
-                            map: map
-                        });
-                    }
+
+
+
+
+
+
 
                     function loadZones(device_id){
 
@@ -516,9 +540,56 @@
                         return id;
                     }
 
-                    let devices = devicesInMenu;
-                    devices.addCkickOnMenuEventListener();
 
+
+                }
+
+
+                putDeviceOnAlarmClick();
+
+                function putDeviceOnAlarmClick(){
+
+                    $(document).ready(function(){
+                        $('.put-to-alarm-box').click(function(e){
+                            e.stopPropagation();
+                            var device_id = $(this).data('id');
+                            if(this.checked){
+
+                                putDeviceOnAlarm(device_id);
+                            } else {
+                                takeofDeviceOnAlarm(device_id);
+                            }
+                        });
+                    });
+
+                }
+
+                function takeofDeviceOnAlarm(device_id){
+                    var data = {
+                        id: device_id
+                    }
+                    $.ajax({
+                        type: 'POST',
+                        data: data,
+                        url: '/takeof-device-on-alarm',
+                        success: function(data){
+                            console.log(data);
+                        }
+                    });
+                }
+
+                function putDeviceOnAlarm(device_id){
+                    var data = {
+                        id: device_id
+                    }
+                    $.ajax({
+                        type: 'POST',
+                        data: data,
+                        url: '/put-device-on-alarm',
+                        success: function(data){
+                            console.log(data);
+                        }
+                    });
                 }
 
 

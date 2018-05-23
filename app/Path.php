@@ -23,6 +23,8 @@ class Path extends Model
             return '';
         }
 
+
+
         $ad1 = isset($data->results[0]->address_components[1]) ? $data->results[0]->address_components[1] : '';
         $ad2 = isset($data->results[0]->address_components[0]) ? $data->results[0]->address_components[0] : '';
         $ad3 = isset($data->results[0]->address_components[3]) ? $data->results[0]->address_components[3] : '';
@@ -31,12 +33,22 @@ class Path extends Model
         $ad6 = isset($data->results[0]->address_components[7]) ? $data->results[0]->address_components[7] : '';
 
 
-        return $ad1 . ', '
-            . $ad2->long_name . ','
-            . $ad3->long_name . ','
-            . $ad4->long_name . ','
-            . $ad5->long_name . ','
-            . $ad6->long_name;
+        $address = '';
+
+        try{
+            $address = $ad1->long_name . ', '
+                . $ad2->long_name . ','
+                . $ad3->long_name . ','
+                . $ad4->long_name . ','
+                . $ad5->long_name . ','
+                . $ad6->long_name;
+        }
+        catch(Exception $e){
+            $address = '';
+        }
+
+
+        return $address;
     }
 
     public function images(){

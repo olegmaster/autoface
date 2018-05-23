@@ -31,4 +31,9 @@ class Device extends Model
 
     }
 
+    public function locationLatLng(){
+        $path = Path::where('device_id', $this->id)->orderBy('id', 'desc')->first();
+        return $path;
+    }
+
 }

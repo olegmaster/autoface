@@ -30,12 +30,51 @@
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 
     <script>
-        // $(document).on('click', '.nav-side-menu li', function(){
-        //     $(this).children('a').attr('href');
-        //     window.location.href =  $(this).children('a').attr('href');
-        //     console.log($(this).children('a').attr('href'));
-        //
-        // })
+        trackAlarmWork();
+        function trackAlarmWork(){
+            setInterval(function(){
+                serverCheckAlarm();
+            }, 5000);
+        }
+
+        function serverCheckAlarm(){
+            $.ajax({
+                type:'POST',
+                url:'/check/alarm',
+                success:function(data){
+                    if(data.status == 'alarm'){
+                        var device_name = data.device_name;
+                        showAlarmMessage(device_name);
+
+                        addMessageAboutAlarm(data.device_id);
+                    }
+                }
+            });
+        }
+
+        function addMessageAboutAlarm(device_id){
+            var data = {
+                device_id: device_id
+            }
+            var data = data;
+            $.ajax({
+                type:'POST',
+                url:'/message/handle',
+                data: data,
+                success:function(data){
+                    console.log(data);
+                }
+            });
+        }
+
+        function showAlarmMessage(device_name){
+            $(document).ready(function(){
+                var message = '<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Сработала сигнализация</strong> устройство ' + device_name + '&nbsp</div>';
+                $('.message-container').html(message);
+            })
+
+        }
+
     </script>
 
 </head>
@@ -45,6 +84,10 @@
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
                     <span id="clock">&nbsp;</span>
+                    <div class="message-container">
+
+                    </div>
+
                 </a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -106,7 +149,9 @@
                             <ul class="sub-menu" id="devices">
 
                             @foreach($devices as $device)
-                                <li class="devices-list" data-id="{{$device->id}}">{{$device->vehicle}}</li>
+                                <li class="devices-list" data-id="{{$device->id}}">{{$device->vehicle}}<input class="put-to-alarm-box" type="checkbox" value="" @if ($device->alarm_system)
+                                        checked
+                                                @endif data-id="{{$device->id}}" > </li>
                             @endforeach
                             </ul>
                         @endif
@@ -132,7 +177,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#">
+                            <a href="/situations">
                                 <i class="fa fa-user fa-lg"></i> Экстренные ситуации
                             </a>
                         </li>

@@ -92,3 +92,19 @@
 
 }
 
+.put-to-alarm-box {
+    float: right;
+    margin-right: 10px;
+    margin-bottom: 0;
+}
+
+.message-container {
+    float:right;
+    margin-left: 210px;
+    padding:0;
+}
+
+.alert-danger{
+    margin: 0;
+}
+

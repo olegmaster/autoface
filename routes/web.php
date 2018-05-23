@@ -23,6 +23,16 @@ Route::resource('/device', 'DeviceController');
 
 Route::get('/device-path/{id}','DeviceController@getPathOfDevice');
 
+Route::get('/device/get-for-map/{id}', 'DeviceController@getDeviceForMap');
+
+Route::get('/get-all-device-for-map', 'DeviceController@getAllDevices');
+
+Route::post('/put-device-on-alarm', 'DeviceController@putDeviceOnAlarm');
+
+Route::post('/takeof-device-on-alarm', 'DeviceController@takeOfDeviceFromAlarm');
+
+Route::post('/check/alarm', 'DeviceController@checkAlarm');
+
 Route::get('/profile', 'UserController@edit')->name('profile');
 
 Route::post('/user/update', 'UserController@update');
@@ -42,4 +52,8 @@ Route::get('/zone/get-all/{deviceId}', 'ZoneController@getAll');
 Route::post('/zone/add', 'ZoneController@add');
 
 Route::post('/zone/change', 'ZoneController@change');
+
+Route::post('/message/handle', 'MessageController@handleMessage');
+
+Route::get('/situations', 'MessageController@index');
 

@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Device;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\{Http\Request, Support\Facades\Auth};
 
 
 class DeviceController extends Controller
@@ -40,7 +39,7 @@ class DeviceController extends Controller
     }
 
     public function show($id){
-        echo 'ecfo';
+        echo 'wecfo';
     }
 
     public function edit($id){
@@ -81,6 +80,106 @@ class DeviceController extends Controller
 
         return ;
     }
+
+    public function getDeviceForMap($id){
+        $device = Device::where('id', $id)->first();
+        return response()->json($device->locationLatLng());
+    }
+
+    public function getAllDevices(){
+        $user_id = Auth::id();
+        $coordinates = [];
+        $devices = Device::where('user_id', $user_id)->get();
+
+        foreach ($devices as $device){
+            $coordinates[] = $device->locationLatLng();
+        }
+
+        return response()->json($coordinates);
+    }
+
+    public function putDeviceOnAlarm(Request $request) {
+
+         $device = Device::find($request->id);
+         $path = $device->locationLatLng();
+         $latLngFromPath = [
+             'lat' => $path->latitude,
+             'lng' => $path->longitude
+         ];
+
+         $key = 'alarm' . $request->id;
+
+         $request->session()->put($key, $latLngFromPath);
+
+         $device->alarm_system = 1;
+
+         $device->save();
+         return response()->json($latLngFromPath);
+
+    }
+
+    public function takeOfDeviceFromAlarm(Request $request){
+
+        $device = $this->getDevice($request->id);
+
+        $currentDeviceCoordinates = $this->getLastCoordinates($device);
+
+        $key = 'alarm' . $request->id;
+
+        $request->session()->forget($key);
+
+        $device->alarm_system = 0;
+
+        $device->save();
+        return response()->json($currentDeviceCoordinates);
+    }
+
+    private function getDevice($id){
+        return Device::find($id);
+    }
+
+    private function getLastCoordinates(Device $device){
+        $path = $device->locationLatLng();
+
+        return [
+            'lat' => $path->latitude,
+            'lng' => $path->longitude
+        ];
+    }
+
+    public function checkAlarm(Request $request){
+
+        $devicesAlarm = $this->getAllDevicesOnAlarm();
+        foreach($devicesAlarm as $device){
+            $currentCoordinates = $this->getLastCoordinates($device);
+            $key = 'alarm' . $device->id;
+            $alarmCoordinates = $request->session()->get($key);
+            if($currentCoordinates['lat'] !== $alarmCoordinates['lat'] || $currentCoordinates['lng'] !== $alarmCoordinates['lng']){
+                return response()->json([
+                    'status' => 'alarm',
+                    'device_name' => $device->vehicle,
+                    'device_id' => $device->id
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 'ok'
+        ]);
+
+
+
+
+    }
+
+    private function getAllDevicesOnAlarm(){
+        $user_id = Auth::id();
+        $alarmDevices = Device::where('user_id', $user_id)->where('alarm_system', 1)->get();
+        return $alarmDevices;
+    }
+
+
+
 
 
 }
