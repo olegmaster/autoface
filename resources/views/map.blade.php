@@ -12,6 +12,32 @@
                 </button>
                 <img src="" id="large-image" >
             </div>
+            <div id="affilate-device-window">
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <button type="button" class="close" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Пользователь для аффилиации:</h3>
+                        <br/>
+                    </div>
+                    <div class="col-md-12">
+                        <div id="users-affiliation-list"></div>
+                        <br/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <input type="button" class="btn btn-success" id="add-affiliation-zone" value="Добавить зону аффилиации" />
+                    </div>
+                </div>
+
+            </div>
             <div id="map" style="height:700px;width:130%;"></div>
 
             <script>
@@ -291,6 +317,143 @@
                     }];
 
 
+                var affiliator = {};
+
+                affiliator.init = function(){
+                    this.closeClickListen();
+                    this.getAllUsers();
+                    this.askAffiliationsForConfirm();
+                    //this.getAffiliatedDevices();
+                };
+
+                affiliator.showAffiliatorWindow = function() {
+                    $('#affilate-device-window').css('opacity', 1);
+                    $('#affilate-device-window').css('z-index', '2');
+                };
+
+                affiliator.hideAffiliatorWindow = function() {
+                    $('#affilate-device-window').css('opacity', 0);
+                    $('#affilate-device-window').css('z-index', 0);
+                };
+
+                affiliator.closeClickListen = function() {
+                    $(document).ready(() => {
+                        $('#affilate-device-window .close').click(() => {
+                            this.hideAffiliatorWindow();
+                        })
+                    });
+                };
+
+                affiliator.getAffiliateUser = function() {
+                    this.showAffiliatorWindow();
+                    $(document).ready(() => {
+                       $('#add-affiliation-zone').click(() => {
+                           //console.log($('select[name="affiliated_user"] ').val());
+                           this.hideAffiliatorWindow();
+                           return $('select[name="affiliated_user"] ').val();
+
+                       })
+                    });
+
+                };
+
+
+                affiliator.checkDeviceIsSelected = function() {
+                    if(imageLoader.device !== undefined){
+                        return true;
+                    } else{
+                        return false;
+                    }
+                };
+
+                affiliator.askAffiliationsForConfirm = function() {
+                    let self = this;
+                    let affiliations = this.getAffiliationsForConfirm();
+                    affiliations.forEach(function(item){
+                        let confirmed = confirm('user ' + item.user_id + ' ask to affiliate device ' + item.device_id);
+                        if(confirmed){
+                            self.acceptAffiliation(item.id);
+                        } else {
+                            self.rejectAffiliation(item.id);
+                        }
+                    });
+                }
+
+                affiliator.getAffiliationsForConfirm = function() {
+                    let affiliatons = [];
+                    $.ajax({
+                        type: 'GET',
+                        url: '/get-affilations-for-confirm',
+                        async: false,
+                        success: function(data){
+                            affiliatons = data;
+                        }
+                    });
+
+                    return affiliatons;
+                };
+
+                affiliator.acceptAffiliation = function(affiliation_id){
+                    $.ajax({
+                        type: 'GET',
+                        url: '/confirm-affiliation/' + affiliation_id,
+                        success: function(data){
+                        }
+                    });
+                };
+
+                affiliator.rejectAffiliation = function(affiliation_id){
+                    $.ajax({
+                        type: 'GET',
+                        url: '/reject-affiliation/' + affiliation_id,
+                        success: function(data){
+                        }
+                    });
+                };
+
+                affiliator.getAllUsers = function() {
+                    let self = this;
+                    $.ajax({
+                            type: 'GET',
+                            url: '/users/get/all',
+                            success: function(data){
+                                //console.log(data);
+                                let usersCheckbox = self.createUsersCheckbox(data);
+                                self.appendUsersCheckbox(usersCheckbox);
+                            }
+                     });
+                };
+
+                affiliator.createUsersCheckbox = function(userData) {
+                    let checkbox = '<select name="affiliated_user">';
+                    userData.forEach(function(elem){
+                        checkbox += '<option value="' + elem.id + '">' + elem.name + '</option>';
+                    });
+                    checkbox += '</select>';
+                    return checkbox;
+                };
+
+                affiliator.appendUsersCheckbox = function(checkbox){
+                    $('#users-affiliation-list').append(checkbox);
+                };
+
+                affiliator.getAffiliatedDevices = function(){
+                    let affiliatedDevices = [];
+                    $.ajax({
+                        type: 'GET',
+                        url: '/get-affiliated-devices',
+                        async: false,
+                        success: function(data){
+                            console.log(data);
+                            affiliatedDevices = data;
+                        }
+                    });
+                    return affiliatedDevices;
+                };
+
+                affiliator.init();
+
+
                 function initMap() {
 
 
@@ -306,6 +469,8 @@
                     var allMarkers = [];
 
                     loadAllDevices();
+
+                    loadAffiliatedDevices();
 
                     loadZonesOnClickDevice();
 
@@ -324,6 +489,17 @@
                     function loadAllDevices(){
                         // /device/get-all-for-map/
                         askServerForDevices();
+                    }
+
+                    function loadAffiliatedDevices(){
+                        let affiliatedDevices = affiliator.getAffiliatedDevices();
+                        if(typeof affiliatedDevices === "object") {
+                            affiliatedDevices.forEach(function(item){
+                                addAffiliatedMarker(item.latitude, item.longitude);
+                                console.log(item);
+                            });
+                        }
+
                     }
 
                     function askServerForDevices(){
@@ -352,7 +528,6 @@
                             type: 'GET',
                             url: '/device/get-for-map/' + device_id,
                             success: function(data){
-                                console.log(data);
                                 mapAddMarker(data.latitude, data.longitude);
                             }
                         });
@@ -366,6 +541,8 @@
                             position: {lat: lat, lng: lng},
                             map: map
                         });
+                        //console.log(marker);
+                        //marker.setAnimation(google.maps.Animation.BOUNCE);
                         allMarkers.push(marker);
                     }
 
@@ -373,6 +550,16 @@
                         for (var i = 0; i < allMarkers.length; i++) {
                             allMarkers[i].setMap(null);
                         }
+                    }
+
+                    function addAffiliatedMarker(lat, lng){
+                        var marker = new google.maps.Marker({
+                            position: {lat: lat, lng: lng},
+                            map: map
+                        });
+                        //console.log(marker);
+                        marker.setAnimation(google.maps.Animation.BOUNCE);
+                        allMarkers.push(marker);
                     }
 
 
@@ -383,7 +570,16 @@
                                 alert('Выберите устройство');
                                 return;
                             }
-                            createZone();
+                            affiliator.showAffiliatorWindow();
+                            $(document).ready(() => {
+                                $('#add-affiliation-zone').click(() => {
+                                    //console.log($('select[name="affiliated_user"] ').val());
+                                    affiliator.hideAffiliatorWindow();
+                                    let affiliated_user = $('select[name="affiliated_user"] ').val();
+                                    createZone(affiliated_user);
+                                })
+                            });
+
                         });
                     }
 
@@ -426,15 +622,33 @@
                         allZones = [];
                     }
 
-                    function createZone(){
+                    function createZone(affiliated_user){
 
                         var cityCircle = createZoneCircle(null);
                         var zoneData = getZoneData(cityCircle);
-                        var id = addNewZoneOnServer(zoneData);
-                        cityCircle.id = id;
+                        var zone_id = addNewZoneOnServer(zoneData);
+                        var device_id = imageLoader.device;
+                        addAffiliationOnServer(affiliated_user, zone_id, device_id);
+                        cityCircle.id = zone_id;
                         addRadiusChangeListenerToCircle(cityCircle);
                         addCenterChangeListenerToCircle(cityCircle);
                         allZones.push(cityCircle);
+                    }
+
+                    function addAffiliationOnServer(affiliated_user, zone_id, device_id){
+                        let data = {
+                            device_id: device_id,
+                            zone_id: zone_id,
+                            affiliate_user_id: affiliated_user
+                        }
+                        $.ajax({
+                            type:'POST',
+                            url:'/affiliation/add',
+                            data: data,
+                            success:function(data){
+                                id = data.id;
+                            }
+                        });
                     }
 
                     function createZoneCircle(data){
@@ -543,6 +757,8 @@
 
 
                 }
+
+
 
 
                 putDeviceOnAlarmClick();

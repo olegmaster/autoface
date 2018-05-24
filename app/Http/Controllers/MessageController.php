@@ -10,7 +10,7 @@ class MessageController extends Controller
 
     public function index(){
         $user_id = Auth::id();
-        $messages = Message::where('user_id', $user_id)->paginate(3);
+        $messages = Message::where('user_id', $user_id)->orderBy('id', 'desk')->paginate(3);
         return view('message.index', ['messages' => $messages]);
     }
 

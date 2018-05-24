@@ -42,10 +42,10 @@
                 type:'POST',
                 url:'/check/alarm',
                 success:function(data){
+                    console.log(data);
                     if(data.status == 'alarm'){
                         var device_name = data.device_name;
                         showAlarmMessage(device_name);
-
                         addMessageAboutAlarm(data.device_id);
                     }
                 }

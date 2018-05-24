@@ -27,4 +27,10 @@ class UserController extends Controller
         return redirect('/profile')->with('success', 'Профиль обновлен');
     }
 
+    public function getAllUsers(){
+        $curr_user = Auth::id();
+        $all_users = User::where('id', '<>', $curr_user)->get();
+        return $all_users;
+    }
+
 }

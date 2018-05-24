@@ -6,7 +6,7 @@
         <table class="table table-striped">
             <tr><td>Устройство</td><td>Время</td><td>Тип события</td><td>Статус обработка</td></tr>
             @foreach ($messages as $message)
-                <tr><td>1</td><td></td><td></td><td></td></tr>
+                <tr><td>{{$message->device()->vehicle}}</td><td>{{$message->created_at}}</td><td>{{$message->type}}</td><td>{{$message->status}}</td></tr>
             @endforeach
         </table>
         {{ $messages->links() }}

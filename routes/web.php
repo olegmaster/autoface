@@ -57,3 +57,15 @@ Route::post('/message/handle', 'MessageController@handleMessage');
 
 Route::get('/situations', 'MessageController@index');
 
+Route::get('/users/get/all', 'UserController@getAllUsers');
+
+Route::post('/affiliation/add', 'AffiliationController@add');
+
+Route::get('/get-affilations-for-confirm', 'AffiliationController@getAffiliationsToConfirm');
+
+Route::get('/confirm-affiliation/{id}', 'AffiliationController@confirmAlliliation');
+
+Route::get('/reject-affiliation/{id}', 'AffiliationController@rejectAffiliation');
+
+Route::get('/get-affiliated-devices', 'DeviceController@getAffiliatedDevices');
+

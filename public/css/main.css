@@ -75,12 +75,12 @@
     cursor: pointer;
 }
 
-#large-image-window {
+#large-image-window, #affilate-device-window {
     padding:2%;
     left: 10%;
     width: 80%;
     height: 80%;
-     position: absolute;
+    position: absolute;
     top: 20px;
     margin: 0 auto;
     z-index: 0;

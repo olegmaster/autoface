@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Device;
+use App\{Device, Affiliation, Zone};
 use Illuminate\{Http\Request, Support\Facades\Auth};
 
 
@@ -151,9 +151,16 @@ class DeviceController extends Controller
 
         $devicesAlarm = $this->getAllDevicesOnAlarm();
         foreach($devicesAlarm as $device){
+
             $currentCoordinates = $this->getLastCoordinates($device);
+
             $key = 'alarm' . $device->id;
             $alarmCoordinates = $request->session()->get($key);
+
+            if(!isset($alarmCoordinates['lat'])){
+                return;
+            }
+
             if($currentCoordinates['lat'] !== $alarmCoordinates['lat'] || $currentCoordinates['lng'] !== $alarmCoordinates['lng']){
                 return response()->json([
                     'status' => 'alarm',
@@ -177,6 +184,39 @@ class DeviceController extends Controller
         $alarmDevices = Device::where('user_id', $user_id)->where('alarm_system', 1)->get();
         return $alarmDevices;
     }
+
+    public function getAffiliatedDevices(){
+        $current_user = Auth::id();
+        $getAffiliatedDevices = Affiliation::where('affiliate_user_id', $current_user)->where('status', 1)->get();
+        $devices = [];
+        foreach ($getAffiliatedDevices as $getAffiliatedDevice){
+            $device = $getAffiliatedDevice;
+            $zone  = Zone::find($device->zone_id);
+            print_r($zone);
+            die();
+            $devices[] = $device;
+        }
+        return $devices;
+    }
+
+    private function checkPointInZone($point1, $point2, $radius){
+        $distance = $this->distance($point1['lat'], $point1['lon'], $point2['lat'], $point2['lng']);
+        if($distance > $radius){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private function distance($lat1, $lon1, $lat2, $lon2) {
+      $theta = $lon1 - $lon2;
+      $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+      $dist = acos($dist);
+      $dist = rad2deg($dist);
+      $miles = $dist * 60 * 1.1515;
+      return ($miles * 1.609344)*1000;
+    }
+
 
 
 
