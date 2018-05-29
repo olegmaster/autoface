@@ -13,4 +13,9 @@ class Affiliation extends Model
         $coordinates['longitude'] = $device->locationLatLng()->longitude;
         return $coordinates;
     }
+
+    public function getUser(){
+        return $this->belongsTo('App\User', 'affiliate_user_id');
+    }
+
 }

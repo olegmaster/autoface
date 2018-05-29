@@ -192,9 +192,8 @@ class DeviceController extends Controller
         foreach ($getAffiliatedDevices as $getAffiliatedDevice){
             $device = $getAffiliatedDevice;
             $zone  = Zone::find($device->zone_id);
-            print_r($zone);
-            die();
-            $devices[] = $device;
+
+            $devices[] = $device->getDevice();
         }
         return $devices;
     }

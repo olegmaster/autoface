@@ -39,13 +39,18 @@ Route::post('/user/update', 'UserController@update');
 
 Route::get('/image/get/{deviceId}/{cameraId}/{page}', 'ImageController@getImage');
 
+
+
+Route::get('/api/video/list/{serialNumber}/{password}', 'ApiController@videoList');
+
+Route::get('/api/alarm-video/list/{serialNumber}/{password}','ApiController@alarmVideoList');
+
+Route::post('/api/video/required', 'ApiController@setVideoRequired');
+
 Route::post('/api/image/save', 'ApiController@imageSave');
 
 Route::post('/api/video/save', 'ApiController@videoSave');
 
-Route::get('/api/video/list', 'ApiController@videoList');
-
-Route::post('/api/video/required', 'ApiController@setVideoRequired');
 
 Route::get('/zone/get-all/{deviceId}', 'ZoneController@getAll');
 
@@ -53,11 +58,15 @@ Route::post('/zone/add', 'ZoneController@add');
 
 Route::post('/zone/change', 'ZoneController@change');
 
+
+
 Route::post('/message/handle', 'MessageController@handleMessage');
 
 Route::get('/situations', 'MessageController@index');
 
 Route::get('/users/get/all', 'UserController@getAllUsers');
+
+Route::get('/get-affiliated-devices', 'DeviceController@getAffiliatedDevices');
 
 Route::post('/affiliation/add', 'AffiliationController@add');
 
@@ -67,5 +76,10 @@ Route::get('/confirm-affiliation/{id}', 'AffiliationController@confirmAlliliatio
 
 Route::get('/reject-affiliation/{id}', 'AffiliationController@rejectAffiliation');
 
-Route::get('/get-affiliated-devices', 'DeviceController@getAffiliatedDevices');
+
+Route::resource('/affiliate-user', 'AffiliateUserController');
+
+Route::get('/delete-affiliation/{id}', 'AffiliateUserController@destroy');
+
+Route::post('/affiliate-user-search', 'AffiliateUserController@search');
 

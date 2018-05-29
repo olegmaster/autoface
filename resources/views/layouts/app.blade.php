@@ -160,6 +160,11 @@
                                 <i class="fa fa-user fa-lg"></i> Диспетчер устройств
                             </a>
                         </li>
+                        <li>
+                            <a href="/affiliate-user">
+                                <i class="fa fa-user fa-lg"></i> Аффилированные пользователи
+                            </a>
+                        </li>
 
                         <li>
                             <a href="#">

@@ -19,22 +19,14 @@ class ApiController extends Controller
         $cam2 = $request->file('image2');
         $text = $request->file('text');
 
-//        echo "<pre>";
-//        print_r($cam1->getClientOriginalName());
-//        echo "</pre>";
-//
-//        die();
-
         $msg = [];
-
-        // 6549842165489
-        // 159
 
         $deviceSerialNumber = $request->serial_number;
         $devicePass = $request->password;
 
-        $device = Device::where('serial_number', $deviceSerialNumber)->where('password', $devicePass)->first();
-        if($device === null){
+        $device = $this->authDevice($deviceSerialNumber, $devicePass);
+
+        if(!$device){
             return response()->json([
                 'status' => 'error',
                 'msg' => 'device not found',
@@ -85,7 +77,17 @@ class ApiController extends Controller
 
     public function videoSave(Request $request){
 
-        //die();
+        $deviceSerialNumber = $request->serial_number;
+        $devicePass = $request->password;
+        $device = $this->authDevice($deviceSerialNumber, $devicePass);
+
+        if(!$device){
+            return response()->json([
+                'status' => 'error',
+                'msg' => 'device not found',
+                'alert' => "Abundant Active Aptitude"
+            ], 200);
+        }
 
         $video = $request->file('video');
 
@@ -110,6 +112,17 @@ class ApiController extends Controller
 
     public function setVideoRequired(Request $request){
 
+        $deviceSerialNumber = $request->serial_number;
+        $devicePass = $request->password;
+        $device = $this->authDevice($deviceSerialNumber, $devicePass);
+
+        if(!$device){
+            return response()->json([
+                'status' => 'error',
+                'msg' => 'device not found',
+                'alert' => "Abundant Active Aptitude"
+            ], 200);
+        }
 
         $path = $request->path;
         //echo $request->path;
@@ -127,24 +140,23 @@ class ApiController extends Controller
 
     }
 
-    public function videoList(){
+    public function videoList($serial_number, $password){
+
+        $device = $this->authDevice($serial_number, $password);
+
+        if(!$device){
+            return response()->json([
+                'status' => 'error',
+                'msg' => 'device not found',
+                'alert' => "Abundant Active Aptitude"
+            ], 200);
+        }
 
         $result = [];
 
-        $videosOnEvents = Video::where('downloaded', 0)->orderBy('id', 'desc')->take(1)->get();
-
         $videos = Video::where('downloaded', 0)->get();
 
-
         Video::where('downloaded', 0)->update(['downloaded' => 1]);
-
-
-//        foreach ($videosOnEvents as $video){
-//            $elem = [];
-//            $elem['video_name'] = $video->name;
-//            $elem['state'] = 'signaling';
-//            $result[] = $elem;
-//        }
 
         foreach ($videos as $video){
             $result[] = $video->name;
@@ -152,6 +164,43 @@ class ApiController extends Controller
 
         return response()->json($result);
     }
+
+
+    public function alarmVideoList($serial_number, $password){
+
+        $device = $this->authDevice($serial_number, $password);
+
+        if(!$device){
+            return response()->json([
+                'status' => 'error',
+                'msg' => 'device not found',
+                'alert' => "Abundant Active Aptitude"
+            ], 200);
+        }
+
+        $result = [];
+
+        $videosOnEvents = Video::where('downloaded', 0)->orderBy('id', 'desc')->take(1)->get();
+
+
+        Video::where('downloaded', 0)->update(['downloaded' => 1]);
+
+
+        foreach ($videosOnEvents as $video){
+            $elem = [];
+            $elem['video_name'] = $video->name;
+            $elem['state'] = 'signaling';
+            $result[] = $elem;
+        }
+
+        return response()->json([
+            'video_name' => 'cam1_29_05_2018_14_34_57',
+            'state' => 'signaling'
+            ]);
+
+        return response()->json($result);
+    }
+
 
     private function convertTextFileToArrayOfLines($path){
         $result = [];
@@ -206,5 +255,19 @@ class ApiController extends Controller
         }
         return true;
     }
+
+    private function authDevice($serialNumber, $devicePassword){
+
+        $device = Device::where('serial_number', $serialNumber)->where('password', $devicePassword)->first();
+
+        if($device === null){
+            return false;
+        } else{
+            return $device;
+        }
+
+    }
+
+
 
 }
