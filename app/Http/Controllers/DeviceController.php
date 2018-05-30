@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\{Device, Affiliation, Zone};
+use App\{
+    Device, Affiliation, Image, SignalTest, Zone
+};
 use Illuminate\{Http\Request, Support\Facades\Auth};
+use Carbon\Carbon;
 
 
 class DeviceController extends Controller
@@ -134,18 +137,7 @@ class DeviceController extends Controller
         return response()->json($currentDeviceCoordinates);
     }
 
-    private function getDevice($id){
-        return Device::find($id);
-    }
 
-    private function getLastCoordinates(Device $device){
-        $path = $device->locationLatLng();
-
-        return [
-            'lat' => $path->latitude,
-            'lng' => $path->longitude
-        ];
-    }
 
     public function checkAlarm(Request $request){
 
@@ -179,11 +171,7 @@ class DeviceController extends Controller
 
     }
 
-    private function getAllDevicesOnAlarm(){
-        $user_id = Auth::id();
-        $alarmDevices = Device::where('user_id', $user_id)->where('alarm_system', 1)->get();
-        return $alarmDevices;
-    }
+
 
     public function getAffiliatedDevices(){
         $current_user = Auth::id();
@@ -198,6 +186,110 @@ class DeviceController extends Controller
         return $devices;
     }
 
+    public function bondDevicesOnConnection(){
+        $getDevices = Device::all();
+        $nowTime = Carbon::now()->timestamp;
+
+        foreach($getDevices as $device){
+            $timeOfLastConnection = $this->getLastConnectionTime($device);
+            if(!is_null($timeOfLastConnection)){
+                $timeOutSignal = $nowTime - $timeOfLastConnection;
+                if(!$this->checkValidConnection($timeOutSignal)){
+                    continue;
+                }
+
+                $this->informNearblyDevicesAboutAlarm($device, $timeOfLastConnection);
+            }
+        }
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    private function informNearblyDevicesAboutAlarm($device, $timeOfLastConnection){
+        $nearblyDevices = $this->findAllDevicesInRadius($device, 500);
+
+        foreach($nearblyDevices as $nearblyDevice){
+            $this->createSignalAlarm($nearblyDevice, $timeOfLastConnection);
+        }
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    private function createSignalAlarm($nearblyDevice, $timeOfLastConnection){
+        $signalTest = new SignalTest;
+        $deviceOwner = $nearblyDevice->getDeviceBigNoise()->first();
+        $signalTest->user_id = $deviceOwner->id;
+        $signalTest->device_id = $nearblyDevice->id;
+        $signalTest->time_fresh_signal = date('Y-m-d H:i:s', $timeOfLastConnection);
+        $signalTest->unix_time_fresh_signal = $timeOfLastConnection;
+        $signalTest->save();
+    }
+
+    private function checkValidConnection($timeOutSignal){
+        return true;
+        if($timeOutSignal < 30) {
+            return true;
+        }
+        return false;
+    }
+
+    private function findAllDevicesInRadius($device, $radius){
+        $CurDevLngLat = $device->locationLatLng();
+
+        $getDevices = Device::all();
+        $result = [];
+
+        foreach ($getDevices as $single_device){
+            if($single_device->id == $device->id){
+                continue;
+            }
+
+            $curDevLngLat = $single_device->locationLatLng();
+
+            if(is_null($curDevLngLat)){
+                continue;
+            }
+
+            $distanceBetwenDevices = $this->distanceByPath($CurDevLngLat, $curDevLngLat);
+            if($distanceBetwenDevices < $radius){
+                $result[] = $single_device;
+            }
+        }
+        return $result;
+    }
+
+    private function getLastConnectionTime($device){
+        $dev_id = $device->id;
+        //echo $dev_id;
+        $timeDataByImageGet = Image::where('device_id', $dev_id)->orderBy('created_at', 'desc')->first();
+        if(is_null($timeDataByImageGet)){
+            return null;
+        }
+
+        //print_r($timeDataByImageGet);
+        //die();
+        return $timeDataByImageGet->created_at->timestamp;
+    }
+
+    private function getAllDevicesOnAlarm(){
+        $user_id = Auth::id();
+        $alarmDevices = Device::where('user_id', $user_id)->where('alarm_system', 1)->get();
+        return $alarmDevices;
+    }
+
+    private function getDevice($id){
+        return Device::find($id);
+    }
+
+    private function getLastCoordinates(Device $device){
+        $path = $device->locationLatLng();
+
+        return [
+            'lat' => $path->latitude,
+            'lng' => $path->longitude
+        ];
+    }
+
     private function checkPointInZone($point1, $point2, $radius){
         $distance = $this->distance($point1['lat'], $point1['lon'], $point2['lat'], $point2['lng']);
         if($distance > $radius){
@@ -208,12 +300,41 @@ class DeviceController extends Controller
     }
 
     private function distance($lat1, $lon1, $lat2, $lon2) {
+
+      if($lat1 === $lat2 && $lon1 === $lon2){
+        return 0;
+      }
+
       $theta = $lon1 - $lon2;
       $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+
       $dist = acos($dist);
+
       $dist = rad2deg($dist);
       $miles = $dist * 60 * 1.1515;
       return ($miles * 1.609344)*1000;
+    }
+
+    private function distanceByPath($path1, $path2){
+
+        if(!$this->checkPath($path1) || !$this->checkPath($path2)){
+           return null;
+        }
+
+
+        $lat1 = $path1->latitude;
+        $lon1 = $path1->longitude;
+        $lat2 = $path2->latitude;
+        $lon2 = $path2->longitude;
+
+        return $this->distance($lat1, $lon1, $lat2, $lon2);
+    }
+
+    private function checkPath($path){
+        if(is_null($path)){
+            return false;
+        }
+        return true;
     }
 
 

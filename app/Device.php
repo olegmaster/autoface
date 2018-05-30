@@ -36,4 +36,8 @@ class Device extends Model
         return $path;
     }
 
+    public function getDeviceBigNoise(){
+        return $this->belongsTo('App\User', 'user_id');
+    }
+
 }

@@ -1013,12 +1013,15 @@
                     },
 
                     informServerWeNeedThisVideo: function(path){
+                        let self = this;
+
                         $.ajax({
                             type:'POST',
                             url:'/api/video/required',
                             data:{
                                 '_token' : '<?php echo csrf_token() ?>',
-                                'path' : path
+                                'path' : path,
+                                'device_id': self.device
                             },
                             success:function(data){
 

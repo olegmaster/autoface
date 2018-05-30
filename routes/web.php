@@ -45,6 +45,8 @@ Route::get('/api/video/list/{serialNumber}/{password}', 'ApiController@videoList
 
 Route::get('/api/alarm-video/list/{serialNumber}/{password}','ApiController@alarmVideoList');
 
+Route::get('/api/alarm-situation-date/{serialNumber}/{password}', 'ApiController@alarmSituationDate');
+
 Route::post('/api/video/required', 'ApiController@setVideoRequired');
 
 Route::post('/api/image/save', 'ApiController@imageSave');
@@ -62,7 +64,7 @@ Route::post('/zone/change', 'ZoneController@change');
 
 Route::post('/message/handle', 'MessageController@handleMessage');
 
-Route::get('/situations', 'MessageController@index');
+Route::get('/situations', 'AlarmSituationController@index');
 
 Route::get('/users/get/all', 'UserController@getAllUsers');
 
@@ -82,4 +84,6 @@ Route::resource('/affiliate-user', 'AffiliateUserController');
 Route::get('/delete-affiliation/{id}', 'AffiliateUserController@destroy');
 
 Route::post('/affiliate-user-search', 'AffiliateUserController@search');
+
+Route::get('/bond-devices-on-connection', 'DeviceController@bondDevicesOnConnection');
 

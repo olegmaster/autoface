@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Path;
+use App\SignalTest;
 use Illuminate\Http\Request;
 use App\Device;
 use App\Image;
@@ -112,32 +113,55 @@ class ApiController extends Controller
 
     public function setVideoRequired(Request $request){
 
-        $deviceSerialNumber = $request->serial_number;
-        $devicePass = $request->password;
-        $device = $this->authDevice($deviceSerialNumber, $devicePass);
-
-        if(!$device){
-            return response()->json([
-                'status' => 'error',
-                'msg' => 'device not found',
-                'alert' => "Abundant Active Aptitude"
-            ], 200);
+        if(isset($request->password) && isset($request->serial_number)) {
+            $deviceSerialNumber = $request->serial_number;
+            $devicePass = $request->password;
+            $device = $this->authDevice($deviceSerialNumber, $devicePass);
+            $device_id = $device->id;
+        } else {
+            $device_id = $request->device_id;
         }
 
-        $path = $request->path;
-        //echo $request->path;
+        if(isset($request->path)){
+            $file_name = $this->getVideoNameFromPath($request->path);
+        } else{
+            $file_name = $request->video_name;
+        }
+
+
+
+        $videoTime = $this->getTimeFromVideoName($file_name);
+
+        $video = new Video;
+        $video->device_id = $device_id;
+        $video->name = $file_name;
+
+        // set video for alarm signal lost situation
+        if(isset($request->video_for_alarm)){
+            $video->downloaded = 0;
+        }
+        $video->time = $videoTime;
+        $video->save();
+        return response()->json(['status' => 'ok']);
+
+    }
+
+    private function getTimeFromVideoName($videoName){
+        $videoName = str_replace('cam1_', '', $videoName);
+        $videoName = str_replace('cam2_', '', $videoName);
+        $videoName = explode('_', $videoName);
+        $time = $videoName[2] . "-" . $videoName[1] . "-" . $videoName[0] . " " . $videoName[3] . ":" . $videoName[4] . ":" . $videoName[5];
+        return $time;
+    }
+
+    private function getVideoNameFromPath($path){
         $path_elem = explode('/', $path);
         //print_r($path_elem);
         $last = $path_elem[count($path_elem)-1];
         //echo $last;
         $second = explode('.', $last);
         $file_name = $second[0];
-        //echo $file_name;
-        $video = new Video;
-        $video->name = $file_name;
-        $video->save();
-
-
+        return $file_name;
     }
 
     public function videoList($serial_number, $password){
@@ -197,6 +221,30 @@ class ApiController extends Controller
             'video_name' => 'cam1_29_05_2018_14_34_57',
             'state' => 'signaling'
             ]);
+
+        return response()->json($result);
+    }
+
+    public function alarmSituationDate($serial_number, $password){
+
+        $device = $this->authDevice($serial_number, $password);
+
+        if(!$device){
+            return response()->json([
+                'status' => 'error',
+                'msg' => 'device not found',
+                'alert' => "Abundant Active Aptitude"
+            ], 200);
+        }
+
+        $result = [];
+
+        $dates = SignalTest::where('device_id', $device->id)->where('asked', 0)->take(1)->get();
+
+        foreach($dates as $date){
+            $result[] = $date['time_fresh_signal'];
+        }
+
 
         return response()->json($result);
     }
