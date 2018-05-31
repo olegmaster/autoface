@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AlarmVideo;
 use App\Path;
 use App\SignalTest;
 use Illuminate\Http\Request;
@@ -93,7 +94,7 @@ class ApiController extends Controller
         $video = $request->file('video');
 
         if(isset($video)){
-            $path = $request->file('video')->storeAs('public/data/video', $video->getClientOriginalName());
+            $path = $request->file('video')->storeAs('public/data/' . $device->id . '/video/', $video->getClientOriginalName());
 
             //$convert = new CloudConvert();
 
@@ -144,6 +145,35 @@ class ApiController extends Controller
         $video->save();
         return response()->json(['status' => 'ok']);
 
+    }
+
+    public function setAlarmVideoRequired(Request $request){
+
+        if(isset($request->password) && isset($request->serial_number)) {
+            $deviceSerialNumber = $request->serial_number;
+            $devicePass = $request->password;
+            $device = $this->authDevice($deviceSerialNumber, $devicePass);
+            $device_id = $device->id;
+        } else {
+            $device_id = $request->device_id;
+        }
+
+        if(isset($request->path)){
+            $file_name = $this->getVideoNameFromPath($request->path);
+        } else{
+            $file_name = $request->video_name;
+        }
+
+
+
+        $videoTime = $this->getTimeFromVideoName($file_name);
+
+        $alarmVideo = new AlarmVideo;
+        $alarmVideo->device_id = $device_id;
+        $alarmVideo->name = $file_name;
+        $alarmVideo->time = $videoTime;
+        $alarmVideo->save();
+        return response()->json(['status' => 'ok']);
     }
 
     private function getTimeFromVideoName($videoName){

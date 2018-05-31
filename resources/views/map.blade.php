@@ -988,7 +988,7 @@
                         let myVar = setInterval(function(){
                             let res = path.split('/');
                             let res2 = res[res.length-1].split('.');
-                            let videoUrl = 'public/data/video/' + res2[0] + ".ogg";
+                            let videoUrl = 'public/data/' + self.device + '/video/' + res2[0] + ".ogg";
                             if(self.imageExists(videoUrl)){
                                 $('#camera_video').attr('src', videoUrl);
                                 var video = document.getElementById('video_up');

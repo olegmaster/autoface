@@ -10,7 +10,7 @@
                     <td>{{$alarm_situation->time_fresh_signal}}</td>
                     <td>Прервано соединение</td>
                     <td>Обработано</td>
-                    <td></td>
+                    <td><a href="/situations-show/{{$alarm_situation->id}}">Посмотреть</a></td>
                 </tr>
             @endforeach
         </table>
