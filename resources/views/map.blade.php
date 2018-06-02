@@ -2,9 +2,6 @@
 
 @section('content')
 <div class="container">
-
-
-
         <div class="col-md-12">
             <div id="large-image-window">
                 <button type="button" class="close" aria-label="Close">
@@ -13,7 +10,6 @@
                 <img src="" id="large-image" >
             </div>
             <div id="affilate-device-window">
-
                 <div class="row">
                     <div class="col-md-12">
                         <button type="button" class="close" aria-label="Close">
@@ -27,13 +23,53 @@
                         <br/>
                     </div>
                     <div class="col-md-12">
+                        <div id="get-user-message"></div>
+                        <input type="text" id="user-for-affiliation" placeholder="логин" />
+                        <input type="button" class="btn btn-success" id="search-user" value="Поиск" />
+                        <input type="hidden" id="user-value" />
                         <div id="users-affiliation-list"></div>
                         <br/>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-12">
-                        <input type="button" class="btn btn-success" id="add-affiliation-zone" value="Добавить зону аффилиации" />
+                        <div class="row set-time-interval">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-6"><p>Время аффилиации (если оставить пустым то на все время)</p></div>
+                            <div class="col-md-3"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <input id="affiliation_date_from" type="date">&nbsp;
+                            </div>
+                            <div class="col-md-3">
+                                <input id="affiliation_time_from" type="time">
+                            </div>
+                            <div class="col-md-3">
+                                <input id="affiliation_date_to" type="date">&nbsp;
+                            </div>
+                            <div class="col-md-3">
+                                <input id="affiliation_time_to" type="time">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <div class="row">
+                    <div class="col-md-6">
+                        Добавить зону аффилиации
+                    </div>
+                    <div class="col-md-6">
+                        <input type="checkbox" id="add-zone-or-not">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <br/>
+                        <input type="button" class="btn btn-success" id="add-affiliation" value="Аффилировать устройство" />
                     </div>
                 </div>
 
@@ -41,6 +77,103 @@
             <div id="map" style="height:700px;width:130%;"></div>
 
             <script>
+
+
+                let userFinder = new class {
+                    constructor() {
+                        this.buttonSelector = 'search-user';
+                        this.searchFieldSelecor = 'user-for-affiliation';
+                        this.userValueSelector = 'user-value';
+                        this.userSearchMessageSelector = 'get-user-message';
+                        this.userFinded = false;
+
+
+                        this.onclickSearchHandle();
+                    }
+
+                    onclickSearchHandle(){
+                        document.onreadystatechange = () => {
+                            if(document.readyState === 'complete'){
+                                document.getElementById(this.buttonSelector).onclick = () => {
+                                    this.getUserFromServer();
+                                };
+                            }
+                        }
+                    }
+
+                    getUserLogin(){
+                        let login = document.getElementById(this.searchFieldSelecor).value;
+                        return login;
+                    }
+
+                    getUserFromServer(){
+
+                        let user = {};
+                        let login = this.getUserLogin();
+
+                        if(login === ''){
+                            this.userFinded = false;
+                            this.showMessage('Пользователь не найден');
+                            return false;
+                        }
+
+                        let url = '/user/find/' + login;
+                        let xhr = window.XMLHttpRequest ? new XMLHttpRequest : new ActiveXObject('Microsoft.XMLHTTP');
+                        xhr.open('GET', url);
+                        xhr.async = false;
+                        xhr.onreadystatechange = () => {
+                            if( xhr.readyState == 3 && xhr.status == 200){
+                                user = JSON.parse(xhr.responseText);
+
+                                if(this.userIsEmpty(user)) {
+                                    this.userFinded = false;
+                                    this.showMessage('Пользователь не найден');
+                                    return false;
+                                }
+
+                                this.userFinded = true;
+                                this.storeUser(user.id);
+                                this.showMessage('Пользователь найден');
+
+                            }
+                        };
+
+                        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                        xhr.send();
+
+                        return true;
+
+                    }
+
+                    showMessage(message){
+                        document.getElementById(this.userSearchMessageSelector).innerHTML = message;
+                    }
+
+                    storeUser(userLogin){
+                        document.getElementById(this.userValueSelector).value  = userLogin;
+                    }
+
+                    userIsEmpty(user){
+                        if(Object.keys(user).length === 0 && user.constructor === Object) {
+                            return true;
+                        }
+                        return false;
+                    }
+
+                    getUserLoginChecked(){
+                        let userLogin = document.getElementById(this.userValueSelector).value;
+                        if( userLogin === ''){
+                            return false;
+                        } else{
+                            return userLogin;
+                        }
+                    }
+
+
+
+
+
+                };
 
 
 
@@ -321,9 +454,7 @@
 
                 affiliator.init = function(){
                     this.closeClickListen();
-                    this.getAllUsers();
                     this.askAffiliationsForConfirm();
-                    //this.getAffiliatedDevices();
                 };
 
                 affiliator.showAffiliatorWindow = function() {
@@ -344,18 +475,49 @@
                     });
                 };
 
-                affiliator.getAffiliateUser = function() {
-                    this.showAffiliatorWindow();
-                    $(document).ready(() => {
-                       $('#add-affiliation-zone').click(() => {
-                           //console.log($('select[name="affiliated_user"] ').val());
-                           this.hideAffiliatorWindow();
-                           return $('select[name="affiliated_user"] ').val();
-
-                       })
-                    });
-
+                affiliator.addZone = function(){
+                    let checkbox = document.getElementById('add-zone-or-not');
+                    if(checkbox.checked){
+                        return true;
+                    } else {
+                        return false;
+                    }
                 };
+
+                affiliator.doTimeFrom = function(date_from, time_from){
+                    if(date_from === ''){
+                        return '2000-01-01 00:00:00';
+                    } else if(time_from === ''){
+                        return date_from + ' 00:00:00';
+                    } else {
+                        return date_from + ' ' + time_from + ':00';
+                    }
+                };
+
+                affiliator.doTimeTo = function(date_to, time_to){
+                    if(date_to === ''){
+                        return '2050-01-01 00:00:00';
+                    } else if(time_to === ''){
+                        return date_to + ' 00:00:00';
+                    } else {
+                        return date_to + ' ' + time_to + ':00';
+                    }
+                };
+
+                affiliator.getTime = function(){
+                    let date_from = $('#affiliation_date_from').val();
+                    let time_from = $('#affiliation_time_from').val();
+                    this.time_from = this.doTimeFrom(date_from, time_from);
+
+                    let date_to = $('#affiliation_date_to').val();
+                    let time_to = $('#affiliation_time_to').val();
+                    this.time_to = this.doTimeTo(date_to, time_to);
+                };
+
+
+
+
+
 
 
                 affiliator.checkDeviceIsSelected = function() {
@@ -377,7 +539,7 @@
                             self.rejectAffiliation(item.id);
                         }
                     });
-                }
+                };
 
                 affiliator.getAffiliationsForConfirm = function() {
                     let affiliatons = [];
@@ -456,6 +618,72 @@
 
                 function initMap() {
 
+                    let positionByTimeShow = new class {
+
+                        constructor(){
+                            this.imageSelector = '#images-container img';
+                            this.imageId = null;
+                            this.marker = null;
+                            this.positionLatitude = null;
+                            this.positionLongitude = null;
+                        }
+
+                        doThis(){
+                            this.catchHowerImage();
+                            this.catchOutImage();
+                        }
+
+                        catchHowerImage(){
+                            let self = this;
+                            $(document).on('mouseenter', this.imageSelector, function(){
+                                self.imageId = this.dataset.id;
+                                self.getPositionFromServer();
+
+                                self.marker = addImageMarker(self.positionLatitude, self.positionLongitude);
+                            });
+                        }
+
+                        catchOutImage(){
+                            let self = this;
+                            $(document).on('mouseleave', this.imageSelector, function(){
+                                self.imageId = null;
+                                this.positionLatitude = null;
+                                this.positionLongitude = null;
+                                self.cleanMarker();
+                            })
+                        }
+
+                        getPositionFromServer(){
+                            let self = this;
+                            let url = '/api-get-position-by-image/' + self.imageId;
+                            $.ajax({
+                                type: 'GET',
+                                url: url,
+                                async: false,
+                                success: function(data){
+                                    self.positionLatitude = data.latitude;
+                                    self.positionLongitude = data.longitude;
+                                }
+                            });
+                        }
+
+                        addPositionMarker(){
+                            if(this.positionLatitude === null || this.positionLongitude === null){
+                                return false;
+                            }
+                            this.marker = addImageMarker(this.positionLatitude, this.positionLongitude);
+                        }
+
+                        cleanMarker(){
+                            if(this.marker === null){
+                                return false;
+                            }
+                            this.marker.setMap(null)
+                        }
+
+                    };
+
+                    positionByTimeShow.doThis();
 
                     var uluru = {lat: 49.98884148, lng: 36.22041411};
                     var map = new google.maps.Map(document.getElementById('map'), {
@@ -487,7 +715,6 @@
                     }
 
                     function loadAllDevices(){
-                        // /device/get-all-for-map/
                         askServerForDevices();
                     }
 
@@ -562,34 +789,56 @@
                         allMarkers.push(marker);
                     }
 
-
-
-                    function addZoneClick(){
-                        $('.add-zone').click(function(){
-                            if(!deviceIsSelected()){
-                                alert('Выберите устройство');
-                                return;
-                            }
-                            affiliator.showAffiliatorWindow();
-                            $(document).ready(() => {
-                                $('#add-affiliation-zone').click(() => {
-                                    //console.log($('select[name="affiliated_user"] ').val());
-                                    affiliator.hideAffiliatorWindow();
-                                    let affiliated_user = $('select[name="affiliated_user"] ').val();
-                                    createZone(affiliated_user);
-                                })
-                            });
-
+                    function addImageMarker(lat, lng){
+                        let image = '/img/target.png';
+                        var marker = new google.maps.Marker({
+                            position: {lat: lat, lng: lng},
+                            map: map,
+                            icon: image,
                         });
+                        return marker;
                     }
 
 
 
+                    function addZoneClick(){
 
 
+                        $(document).ready(() => {
+
+                            $('.add-zone').click(function(){
+                                if(!deviceIsSelected()){
+                                    alert('Выберите устройство');
+                                    return;
+                                }
+                                affiliator.showAffiliatorWindow();
+
+                            });
 
 
+                            $('#add-affiliation').click(() => {
 
+                                let affiliated_user = userFinder.getUserLoginChecked();
+                                if(!affiliated_user){
+                                    alert('Пользователь не найден');
+                                    return false;
+                                }
+
+                                affiliator.hideAffiliatorWindow();
+                                if(affiliator.addZone()){
+                                    createZone(affiliated_user);
+                                    return;
+                                }
+
+                                var zone_id = null;
+                                var device_id = imageLoader.device;
+                                affiliator.getTime();
+                                addAffiliationOnServer(affiliated_user, zone_id, device_id, affiliator.time_from, affiliator.time_to);
+
+
+                            })
+                        });
+                    }
 
                     function loadZones(device_id){
 
@@ -624,31 +873,68 @@
 
                     function createZone(affiliated_user){
 
+                        affiliator.getTime();
+                        var device_id = imageLoader.device;
+                        let affilationId = addAffiliationOnServer(affiliated_user, null, device_id, affiliator.time_from, affiliator.time_to);
+
+                        console.log(affilationId);
+                        if(affilationId === null){
+                            return;
+                        }
+
                         var cityCircle = createZoneCircle(null);
                         var zoneData = getZoneData(cityCircle);
                         var zone_id = addNewZoneOnServer(zoneData);
-                        var device_id = imageLoader.device;
-                        addAffiliationOnServer(affiliated_user, zone_id, device_id);
+                        bindAffiliationZone(affilationId, zone_id);
+
                         cityCircle.id = zone_id;
                         addRadiusChangeListenerToCircle(cityCircle);
                         addCenterChangeListenerToCircle(cityCircle);
                         allZones.push(cityCircle);
                     }
 
-                    function addAffiliationOnServer(affiliated_user, zone_id, device_id){
+                    function bindAffiliationZone(affiliation_id, zone_id){
+
+                        let data = {
+                            affiliation_id: affiliation_id,
+                            zone_id: zone_id,
+                        };
+
+                        $.ajax({
+                            type:'POST',
+                            url:'/bind-affiliation-zone',
+                            data: data,
+                            async: true,
+                            success:function(data){
+                                console.log(data);
+                            }
+                        });
+                    }
+
+                    function addAffiliationOnServer(affiliated_user, zone_id, device_id, time_from, time_to){
+
+                        let my_affiliation_id = null;
+
                         let data = {
                             device_id: device_id,
                             zone_id: zone_id,
-                            affiliate_user_id: affiliated_user
-                        }
+                            affiliate_user_id: affiliated_user,
+                            time_from: time_from,
+                            time_to: time_to
+                        };
+
                         $.ajax({
                             type:'POST',
                             url:'/affiliation/add',
                             data: data,
+                            async: false,
                             success:function(data){
-                                id = data.id;
+                                my_affiliation_id = data;
+                                console.log(data);
                             }
                         });
+
+                        return my_affiliation_id;
                     }
 
                     function createZoneCircle(data){
@@ -877,6 +1163,8 @@
                     helper: helper,
                     page: 1,
                     imgHovered: false,
+                    time_from: '2000-01-00 00:00:00',
+                    time_to: '2050-01-00 00:00:00',
 
                     init: function(){
 
@@ -890,9 +1178,23 @@
 
                         this.clickOnPrevButtonHandle();
 
+                        this.clickIntervalTimeHandle();
+
                         this.catchImageHover();
 
                         this.updateImages();
+
+
+                    },
+
+                    clickIntervalTimeHandle: function() {
+
+                        $(document).ready(() => {
+                            $('#set_time_interval').click(() => {
+                                this.getTimeInterval();
+                                this.downloadImages();
+                            })
+                        })
                     },
 
                     clickOnCameraHandle: function(){
@@ -902,6 +1204,36 @@
                             self.camera = this.dataset.cam_id;
                             self.downloadImages();
                         });
+                    },
+
+                    getTimeInterval: function(){
+                        let date_from = $('#image_date_from').val();
+                        let time_from = $('#image_time_from').val();
+                        this.time_from = this.doTimeFrom(date_from, time_from);
+
+                        let date_to = $('#image_date_to').val();
+                        let time_to = $('#image_time_to').val();
+                        this.time_to = this.doTimeTo(date_to, time_to);
+                    },
+
+                    doTimeFrom: function(date_from, time_from){
+                        if(date_from === ''){
+                            return '0000-00-00 00:00:00';
+                        } else if(time_from === ''){
+                            return date_from + ' 00:00:00';
+                        } else {
+                            return date_from + ' ' + time_from + ':00';
+                        }
+                    },
+
+                    doTimeTo: function(date_to, time_to){
+                        if(date_to === ''){
+                            return '2050-00-00 00:00:00';
+                        } else if(time_to === ''){
+                            return date_to + ' 00:00:00';
+                        } else {
+                            return date_to + ' ' + time_to + ':00';
+                        }
                     },
 
                     higlightCameraIcon: function(hh){
@@ -985,10 +1317,17 @@
 
                     tryLoadVideo: function(path){
                         let self = this;
+                        let tryLoadCounts = 0;
                         let myVar = setInterval(function(){
                             let res = path.split('/');
                             let res2 = res[res.length-1].split('.');
                             let videoUrl = 'public/data/' + self.device + '/video/' + res2[0] + ".ogg";
+                            tryLoadCounts++;
+
+                            if( tryLoadCounts > 100 ){
+                                clearInterval(myVar);
+                            }
+
                             if(self.imageExists(videoUrl)){
                                 $('#camera_video').attr('src', videoUrl);
                                 var video = document.getElementById('video_up');
@@ -1008,8 +1347,6 @@
                                 self.downloadImages();
                             }
                         }, 4000);
-
-
                     },
 
                     informServerWeNeedThisVideo: function(path){
@@ -1047,22 +1384,22 @@
 
                     downloadImages: function(){
                         let self = this;
+                        let data = {
+                            'device_id': this.device,
+                            'camera': this.camera,
+                            'page': this.page,
+                            'from_time': this.time_from,
+                            'to_time': this.time_to,
+                            '_token': '<?php echo csrf_token() ?>'
+                        }
                         $.ajax({
-                            type:'GET',
-                            url:'/image/get/'+this.device + '/' +this.camera + '/' + this.page,
-                            data:'_token = <?php echo csrf_token() ?>',
+                            type:'POST',
+                            url:'/image/get',
+                            data: data,
                             success:function(data){
                                 let images = data.images;
-                                let res = '';
                                 if(images.length > 0) {
-
-                                    images.forEach(function(element){
-                                        res += "<img src='";
-                                        res += element.name;
-                                        res += "' ></img>";
-                                        res += '<span class="enlarge-image">Увеличить</span>';
-                                    });
-                                    $("#images-container").html(res);
+                                    self.putImages(images);
                                     self.showNextButton();
                                 } else {
                                     $("#images-container").html('Нет Данных');
@@ -1070,6 +1407,24 @@
                                 }
                             }
                         });
+                    },
+
+                    putImages: function(images){
+                        let self = this;
+                        let res = '';
+                        images.forEach(function(element){
+                            res += self.getImageHtml(element);
+                        });
+                        $("#images-container").html(res);
+                    },
+
+                    getImageHtml: function(element){
+                        let res = '';
+                        res += '<img src="';
+                        res += element.name;
+                        res += '" data-id="' + element.id + '" ></img>';
+                        res += '<span class="enlarge-image">Увеличить</span>';
+                        return res;
                     },
 
                     imageExists: function (image_url){
@@ -1106,7 +1461,8 @@
                 </div>
                 <div class="col-md-4">
                     <div class="add-zone">
-                        Доьавить зону+
+                        <div class="btn btn-success">Аффилировать</div>
+
                     </div>
                 </div>
             </div>
@@ -1131,19 +1487,43 @@
 
                 </div>
             </div>
-
-
-
+        </div>
+        <div class="col-md-6">
+            <div id="prev_go"><button>Prev</button></div>
+            <div id="images-container"></div>
+            <span style="color:white"><h1></h1></span>
+            <div id="next_go"><button>Next</button></div>
+        </div>
+        <div class="col-md-4" >
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-6"><p>Промежуток времени</p></div>
+                <div class="col-md-3"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <input id="image_date_from" type="date" value="2018-06-01">&nbsp;
+                </div>
+                <div class="col-md-3">
+                    <input id="image_time_from" type="time">
+                </div>
+                <div class="col-md-3">
+                    <input id="image_date_to" type="date">&nbsp;
+                </div>
+                <div class="col-md-3">
+                    <input id="image_time_to" type="time">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-6"><button id="set_time_interval" class="btn btn-primary">Выбрать</button></div>
+                <div class="col-md-3"></div>
+            </div>
 
         </div>
-        <div class="col-md-1" id="prev_go"><button>Prev</button></div>
-        <div id="images-container" class="col-md-6"><span style="color:white"><h1></h1></span></div>
-        <div class="col-md-1" id="next_go"><button>Next</button></div>
     </div>
-
     <p></p>
 </div>
-
 
 <div id="myModal" class="modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -1158,7 +1538,6 @@
                 <span id="loading">Loading ...</span>
                 <video id="video_up" width="320" height="240" controls>
                     <source id="camera_video" src="" type="video/ogg">
-
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -1168,8 +1547,5 @@
         </div>
     </div>
 </div>
-
-
-
 
 @endsection

@@ -4,12 +4,16 @@
     <script>
         let videoHandler = class VideoHandler{
 
+            constructor(){
+                this.videoSelector = '.alarm-video';
+            }
+
             init(){
                 this.hideVideosBeforeDownloaded();
             }
 
             getVideos(){
-                return $('.alarm-video');
+                return $(this.videoSelector);
             }
 
             checkVideoAvailability (url){
@@ -20,8 +24,8 @@
             }
 
             hideVideosBeforeDownloaded(){
-                $(document).ready(function(){
-                    $('.alarm-video').css('opacity', 0);
+                $(document).ready(() => {
+                    $(this.videoSelector).css('opacity', 0);
                 });
             }
 

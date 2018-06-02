@@ -33,4 +33,12 @@ class UserController extends Controller
         return $all_users;
     }
 
+    public function findUser($login){
+        $user = User::where('email', $login)->first();
+        if($user->id == Auth::id()){
+            $user = null;
+        }
+        return $user;
+    }
+
 }

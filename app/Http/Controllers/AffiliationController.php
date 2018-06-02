@@ -13,7 +13,10 @@ class AffiliationController extends Controller
         $affiliation->device_id = $request->device_id;
         $affiliation->zone_id = $request->zone_id;
         $affiliation->affiliate_user_id = $request->affiliate_user_id;
+        $affiliation->start_affiliation = $request->time_from;
+        $affiliation->end_affiliation = $request->time_to;
         $affiliation->save();
+        return $affiliation->id;
     }
 
     public function getAffiliationsToConfirm(){
@@ -31,6 +34,12 @@ class AffiliationController extends Controller
     public function rejectAffiliation($id){
         $affiliation = Affiliation::find($id);
         $affiliation->status = 3;
+        $affiliation->save();
+    }
+
+    function bindZoneToAffilation(Request $request){
+        $affiliation = Affiliation::find($request->affiliation_id);
+        $affiliation->zone_id = $request->zone_id;
         $affiliation->save();
     }
 

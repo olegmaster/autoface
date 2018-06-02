@@ -21,6 +21,8 @@ class ApiController extends Controller
         $cam2 = $request->file('image2');
         $text = $request->file('text');
 
+        $defaultPathId = 1;
+
         $msg = [];
 
         $deviceSerialNumber = $request->serial_number;
@@ -36,25 +38,6 @@ class ApiController extends Controller
             ], 200);
         }
 
-        if(isset($cam1)){
-            $path = $request->file('image')->storeAs('public/data/' . $device->id . '/camera1', $cam1->getClientOriginalName());
-            $image = new Image;
-            $image->name = $path;
-            $image->device_id = $device->id;
-            $image->camera_number = 1;
-            $image->save();
-            $msg[] = "I have recived camera 1 screen";
-        }
-        if(isset($cam2)){
-            $path = $request->file('image2')->storeAs('public/data/' . $device->id . '/camera2',$cam2->getClientOriginalName());
-            $image = new Image;
-            $image->name = $path;
-            $image->device_id = $device->id;
-            $image->camera_number = 2;
-            $image->save();
-            $msg[] = "I have recived camera 2 screen";
-        }
-
         if(isset($text)){
 
             $path = $request->file('text')->storeAs('public/data/' . $device->id . '/text', $text->getClientOriginalName());
@@ -62,10 +45,40 @@ class ApiController extends Controller
 
             if($this->checkNavigatorIsWorking($fileLines)){
                 $coordinates = $this->getCoordinatesFromFileLines($fileLines);
-                $this->saveCoordinatesToDatabase($coordinates, $device->id);
+                $defaultPathId = $this->saveCoordinatesToDatabase($coordinates, $device->id);
             }
 
             $msg[] = "I have recived text";
+        }
+
+
+
+        if(isset($cam1)){
+            $file_name = $cam1->getClientOriginalName();
+            $path = $request->file('image')->storeAs('public/data/' . $device->id . '/camera1', $file_name);
+            $image = new Image;
+            $image->name = $path;
+            $image->device_id = $device->id;
+            $image->camera_number = 1;
+            $image->path_id = $defaultPathId;
+            $image->time = $this->getTimeFromImageName($file_name);
+            $image->save();
+            $msg[] = "I have recived camera 1 screen";
+        }
+
+        //public/data/20/camera2/cam1_02_06_2018_10_04_05.jpg
+
+        if(isset($cam2)){
+            $file_name = $cam1->getClientOriginalName();
+            $path = $request->file('image2')->storeAs('public/data/' . $device->id . '/camera2', $file_name);
+            $image = new Image;
+            $image->name = $path;
+            $image->device_id = $device->id;
+            $image->camera_number = 2;
+            $image->path_id = $defaultPathId;
+            $image->time = $this->getTimeFromImageName($file_name);
+            $image->save();
+            $msg[] = "I have recived camera 2 screen";
         }
 
         return response()->json([
@@ -160,11 +173,9 @@ class ApiController extends Controller
 
         if(isset($request->path)){
             $file_name = $this->getVideoNameFromPath($request->path);
-        } else{
+        } else {
             $file_name = $request->video_name;
         }
-
-
 
         $videoTime = $this->getTimeFromVideoName($file_name);
 
@@ -182,6 +193,18 @@ class ApiController extends Controller
         $videoName = explode('_', $videoName);
         $time = $videoName[2] . "-" . $videoName[1] . "-" . $videoName[0] . " " . $videoName[3] . ":" . $videoName[4] . ":" . $videoName[5];
         return $time;
+    }
+
+    private function getTimeFromImageName($imageName){
+
+        $imageName = str_replace('.jpg', '', $imageName);
+        $imageName = str_replace('cam1_', '', $imageName);
+        $imageName = str_replace('cam2_', '', $imageName);
+
+        $imageName = explode('_', $imageName);
+        $time = $imageName[2] . "-" . $imageName[1] . "-" . $imageName[0] . " " . $imageName[3] . ":" . $imageName[4] . ":" . $imageName[5];
+        return $time;
+
     }
 
     private function getVideoNameFromPath($path){
@@ -255,6 +278,14 @@ class ApiController extends Controller
         return response()->json($result);
     }
 
+    public function getPositionByImage($imageId){
+         $findImage = Image::find($imageId);
+         $path = Path::find($findImage->path_id);
+         $result['latitude'] = $path->latitude;
+         $result['longitude'] = $path->longitude;
+         return response()->json($result);
+    }
+
     public function alarmSituationDate($serial_number, $password){
 
         $device = $this->authDevice($serial_number, $password);
@@ -303,12 +334,20 @@ class ApiController extends Controller
 
         $path = new Path;
 
+        if(count($coordinates) == 0){
+            return 1;
+        }
+
         foreach($coordinates as $coordinate){
             $path->device_id = $deviceId;
             $path->latitude = $coordinate[0];
             $path->longitude = $coordinate[1];
             $path->save();
         }
+
+        $path_id = is_null($path->id) ? 1 : $path->id;
+
+        return $path_id;
 
     }
 

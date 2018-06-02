@@ -37,7 +37,9 @@ Route::get('/profile', 'UserController@edit')->name('profile');
 
 Route::post('/user/update', 'UserController@update');
 
-Route::get('/image/get/{deviceId}/{cameraId}/{page}', 'ImageController@getImage');
+Route::get('/user/find/{login}', 'UserController@findUser');
+
+Route::post('/image/get', 'ImageController@getImage');
 
 
 
@@ -55,6 +57,8 @@ Route::post('/api/image/save', 'ApiController@imageSave');
 
 Route::post('/api/video/save', 'ApiController@videoSave');
 
+Route::get('/api-get-position-by-image/{id}', 'ApiController@getPositionByImage');
+
 
 Route::get('/zone/get-all/{deviceId}', 'ZoneController@getAll');
 
@@ -71,6 +75,8 @@ Route::get('/users/get/all', 'UserController@getAllUsers');
 Route::get('/get-affiliated-devices', 'DeviceController@getAffiliatedDevices');
 
 Route::post('/affiliation/add', 'AffiliationController@add');
+
+Route::post('/bind-affiliation-zone', 'AffiliationController@bindZoneToAffilation');
 
 Route::get('/get-affilations-for-confirm', 'AffiliationController@getAffiliationsToConfirm');
 

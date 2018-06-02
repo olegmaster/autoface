@@ -21,6 +21,18 @@ convertAviIntoOgg(){
 
     	fi
     done
+
+    for file in $path_new/*; do
+        	if [[ ${file##*/} = *"xn990154torr0"* ]]; then
+        		filename=${file##*/}
+
+        		ffmpeg -i $path_new/$filename $path_new/${filename}.ogg
+        		echo ${filename}
+        		mv $path_new/$filename".ogg" $path_new/${filename%xn990154torr0.ogg}".ogg"
+        		rm -rf $path_new/$filename
+
+        	fi
+    done
 }
 
 base_path=/home/pz257197/auto-face.meral.com.ua/www/storage/app/public/data

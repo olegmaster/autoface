@@ -55,6 +55,14 @@
 
 }
 
+#prev_go {
+    float: left;
+}
+
+#next_go {
+    float: right;
+}
+
 #prev_go button, #next_go button{
     cursor: pointer;
 }
@@ -106,5 +114,11 @@
 
 .alert-danger{
     margin: 0;
+}
+
+#get-user-message {
+    float: left;
+    position: absolute;
+    margin-left: 40px;
 }
 
